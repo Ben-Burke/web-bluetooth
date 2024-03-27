@@ -1,0 +1,86 @@
+<button id="read">Connect with FT95</button>
+
+
+<script>
+// FILEPATH: /home/ben/projects/sydneytech/web-bluetooth/auto-reconnect.html
+var bleService = '0000ff12-0000-1000-8000-00805f9b34fb'
+var bluetoothDevice = 'FT95'
+var bleService = '0000ff12-0000-1000-8000-00805f9b34fb'
+
+document.querySelector('#read').addEventListener('click', function() {
+    if (isWebBluetoothEnabled()) { read() }
+  })
+
+function log(message) {
+    console.log(message);
+}
+
+function isWebBluetoothEnabled() {
+    if (!navigator.bluetooth) {
+      console.log('Web Bluetooth API is not available in this browser!')
+      return false
+    }
+
+    return true
+  }
+
+async function read() {
+    try {
+        log('Requesting any Bluetooth Device...');
+        bluetoothDevice = await navigator.bluetooth.requestDevice({
+                filters: [
+                 { "name": bluetoothDevice }
+                    ]
+                }
+                );
+        bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+        connect();
+    } catch(error) {
+        log('Argh! ' + error);
+    }
+}
+
+async function connect() {
+    exponentialBackoff(3 /* max retries */, 2 /* seconds delay */,
+        async function toTry() {
+            time('Connecting to Bluetooth Device... ');
+            await bluetoothDevice.gatt.connect();
+        },
+        function success() {
+            log('> Bluetooth Device connected. Try disconnect it now.');
+        },
+        function fail() {
+            time('Failed to reconnect.');
+        });
+}
+
+function onDisconnected() {
+    log('> Bluetooth Device disconnected');
+    connect();
+}
+
+/* Utils */
+
+// This function keeps calling "toTry" until promise resolves or has
+// retried "max" number of times. First retry has a delay of "delay" seconds.
+// "success" is called upon success.
+async function exponentialBackoff(max, delay, toTry, success, fail) {
+    try {
+        const result = await toTry();
+        success(result);
+    } catch(error) {
+        if (max === 0) {
+            return fail();
+        }
+        time('Retrying in ' + delay + 's... (' + max + ' tries left)');
+        setTimeout(function() {
+            exponentialBackoff(--max, delay * 2, toTry, success, fail);
+        }, delay * 1000);
+    }
+}
+
+function time(text) {
+    log('[' + new Date().toJSON().substr(11, 8) + '] ' + text);
+}
+</script>
+
