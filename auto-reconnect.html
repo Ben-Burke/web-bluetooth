@@ -1,17 +1,25 @@
-<button id="read">Connect with FT95</button>
+<button id="readFT95">Connect with FT95</button>
+<button id="readPO60">Connect with PO60</button>
 
 
 <script>
 // FILEPATH: /home/ben/projects/sydneytech/web-bluetooth/auto-reconnect.html
-var bleService = '0000ff12-0000-1000-8000-00805f9b34fb'
-var bluetoothDevice = 'FT95'
-var bleService = '0000ff12-0000-1000-8000-00805f9b34fb'
+var bluetoothDeviceFT95 = 'FT95'
+var bleServiceThermometer = '0000ff12-0000-1000-8000-00805f9b34fb'
 
-document.querySelector('#read').addEventListener('click', function() {
-    if (isWebBluetoothEnabled()) { read() }
+var bluetoothDevicePO60 = 'PO60'
+var bleServiceSPo2 = '0000ff12-0000-1000-8000-00805f9b34fb'
+
+
+document.querySelector('#readFT95').addEventListener('click', function() {
+    if (isWebBluetoothEnabled()) { readFT95() }
   })
 
-function log(message) {
+document.querySelector('#readPO60').addEventListener('click', function() {
+    if (isWebBluetoothEnabled()) { readPO60() }
+  })
+
+  function log(message) {
     console.log(message);
 }
 
@@ -24,27 +32,27 @@ function isWebBluetoothEnabled() {
     return true
   }
 
-async function read() {
+async function readFT95() {
     try {
         log('Requesting any Bluetooth Device...');
-        bluetoothDevice = await navigator.bluetooth.requestDevice({
+        bluetoothDeviceFT95 = await navigator.bluetooth.requestDevice({
                 filters: [
-                 { "name": bluetoothDevice }
+                 { "name": bluetoothDeviceFT95 }
                     ]
                 }
                 );
-        bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
-        connect();
+        bluetoothDeviceFT95.addEventListener('gattserverdisconnected', onDisconnectedFT95);
+        connectFT95();
     } catch(error) {
         log('Argh! ' + error);
     }
 }
 
-async function connect() {
+async function connectFT95() {
     exponentialBackoff(3 /* max retries */, 2 /* seconds delay */,
         async function toTry() {
-            time('Connecting to Bluetooth Device... ');
-            await bluetoothDevice.gatt.connect();
+            time('Connecting to FT95 Bluetooth Device... ');
+            await bluetoothDeviceFT95.gatt.connect();
         },
         function success() {
             log('> Bluetooth Device connected. Try disconnect it now.');
@@ -54,10 +62,47 @@ async function connect() {
         });
 }
 
-function onDisconnected() {
-    log('> Bluetooth Device disconnected');
-    connect();
+function onDisconnectedFT95() {
+    log('> Bluetooth FT95 Device disconnected');
+    connectFT95();
 }
+
+async function readPO60() {
+    try {
+        log('Requesting any Bluetooth Device...');
+        bluetoothDevicePO60 = await navigator.bluetooth.requestDevice({
+                filters: [
+                 { "name": bluetoothDevicePO60 }
+                    ]
+                }
+                );
+        bluetoothDevicePO60.addEventListener('gattserverdisconnected', onDisconnectedPO60);
+        connectPO60();
+    } catch(error) {
+        log('Argh! ' + error);
+    }
+}
+
+async function connectPO60() {
+    exponentialBackoff(3 /* max retries */, 2 /* seconds delay */,
+        async function toTry() {
+            time('Connecting to PO60 Bluetooth Device... ');
+            await bluetoothDevicePO60.gatt.connect();
+        },
+        function success() {
+            log('> Bluetooth Device connected. Try disconnect it now.');
+        },
+        function fail() {
+            time('Failed to reconnect.');
+        });
+}
+
+function onDisconnectedPO60() {
+    log('> Bluetooth PO60 Device disconnected');
+    connectPO60();
+}
+
+
 
 /* Utils */
 
