@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Beurer FT95 Noble</title>
+  <style>
+    /* ... same styles as before ... */
+  </style>
+</head>
+<body>
+  <h1>Beurer FT95 Noble</h1>
+  <div class="button-container">
+    <button id="read">Connect with BLE device</button>
+    <button id="start" disabled>Start</button>
+    <button id="stop" disabled>Stop</button>
+    <button id="doorbell" disabled>Ring Doorbell</button>
+  </div>
+  <div id="result"></div>
+
+  <script src="nobleBundle.js"></script>
+  <script>
+    // The noble script is now available as a global variable
+    // You can call its functions like this:
+    // noble.read();
+    // noble.start();
+    // noble.stop();
+    // noble.doorbell();
+  </script>
+</body>
+</html>

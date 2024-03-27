@@ -1,217 +1,250 @@
-<button id="read">Connect with BLE device</button>
-<button id="start" disabled>Start</button>
-<button id="stop" disabled>Stop</button>
-<button id="doorbell" disabled>Ring Doorbell</button>
-
-<script>
-  var deviceName = 'FT95'
-  // var GenericService = '00001801-0000-1000-8000-00805f9b34fb'
-  // var GenericServiceCharacteristic =  0x2a05
-  var ThermometerService = '00001809-0000-1000-8000-00805f9b34fb'
-  var TemperatureCharacteristic = 0x2a1C
-  var bluetoothDeviceDetected
-  var gattCharacteristic
-  // var gattWriteableCharacteristic
-
-  document.querySelector('#read').addEventListener('click', function() {
-    if (isWebBluetoothEnabled()) { read() }
-  })
-
-  document.querySelector('#start').addEventListener('click', function(event) {
-    if (isWebBluetoothEnabled()) { start() }
-  })
-
-  document.querySelector('#stop').addEventListener('click', function(event) {
-    if (isWebBluetoothEnabled()) { stop() }
-  })
-
-  document.querySelector('#doorbell').addEventListener('click', function(event) {
-    if (isWebBluetoothEnabled()) { doorbell() }
-  })
-
-
-  function calculateValue(bytes) {
-    if (bytes.length !== 4) {
-      throw new Error('Input must be an array of 4 bytes');
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Beurer FT95</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
     }
 
-    // The first byte is the exponent
-    let exponent = 256 - bytes[0];
-
-    // The remaining bytes form the mantissa
-    let mantissa = (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
-
-    // Calculate the value
-    let value = mantissa * Math.pow(2, -exponent);
-
-    return value;
-  }
-
-  // let decimalBytes = [255, 0, 1, 107];
-  // let hexBytes = decimalBytes.map(byte => byte.toString(16));
-  // console.log(hexBytes);
-  // let result = calculateValue(hexBytes);
-
-  // console.log(result);
-
-
-  function isWebBluetoothEnabled() {
-    if (!navigator.bluetooth) {
-      console.log('Web Bluetooth API is not available in this browser!')
-      return false
+    h1 {
+      text-align: center;
     }
 
-    return true
-  }
-
-  function getDeviceInfo() {
-    let options = {
-      optionalServices: [ThermometerService],
-      filters: [
-        { "name": deviceName }
-      ]
-    }
-    console.log('Requesting any Bluetooth Device...')
-    return navigator.bluetooth.requestDevice(options).then(device => {
-      bluetoothDeviceDetected = device
-    }).catch(error => {
-      console.log('Argh! ' + error)
-    })
-  }
-
-  function read() {
-    return (bluetoothDeviceDetected ? Promise.resolve() : getDeviceInfo())
-    .then(connectGATT)
-    .then(_ => {
-      console.log('PO60...')
-      // return gattCharacteristic.readValue()
-    })
-    .catch(error => {
-      console.log('Waiting to start reading: ' + error)
-    })
-  }
-
-  function connectGATT() {
-    if (bluetoothDeviceDetected.gatt.connected && gattCharacteristic) {
-      return Promise.resolve()
+    .button-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
     }
 
-    return bluetoothDeviceDetected.gatt.connect()
-    .then(server => {
-      console.log('Getting GATT Service...')
-      return server.getPrimaryService(ThermometerService)
-    })
-    .then(service => {
-      console.log('Getting GATT Characteristic...')
-      return service.getCharacteristic(TemperatureCharacteristic)
-    })
-    .then(characteristic => {
-      gattCharacteristic = characteristic
-      gattCharacteristic.addEventListener('characteristicvaluechanged',
-          handleChangedValue)
-      document.querySelector('#start').disabled = false
-      document.querySelector('#stop').disabled = true
-    })
-    
-  }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
 
-  function connectWriteableGATT() {
+    #start, #stop {
+      background-color: #ccc;
+      color: #fff;
+      cursor: not-allowed;
+    }
 
-    return bluetoothDeviceDetected.gatt.connect()
-    .then(server => {
-      console.log('Getting GATT Service...')
-      return server.getPrimaryService(bleService)
-    })
-    .then(service => {
-      console.log('Getting GATT Writeable Characteristic...')
-      return service.getCharacteristic(bleDoorbell)
-    })
-    .then(characteristic => {
-      gattWriteableCharacteristic = characteristic
-      // document.querySelector('#start').disabled = false
-      // document.querySelector('#stop').disabled = true
-    })
-    
-  }
+    #read {
+      background-color: #007bff;
+      color: #fff;
+    }
 
-  // This function converts a binary value to a string
-  
-  
-  function handleChangedValue(event) {
-    let value = event.target.value
-    value = value.buffer ? value : new DataView(value);
-    var now = new Date()
-    // the next line prints the contents of the DataView to the console
-    console.log('casting bytes')
-    // set a variable to the first byte of the DataView
-    let byte1 = value.getUint8(1)
-    let byte2 = value.getUint8(2)
-    let byte3 = value.getUint8(3)
-    let byte4 = value.getUint8(4)
-    let decimalBytes = [byte1, byte2, byte3, byte4]
-    let hexBytes = decimalBytes.map(byte => byte.toString(16));
-    console.log(hexBytes);
-    // swap the order of the hex bytes
-    let swappedBytes = [hexBytes[1], hexBytes[0]]
-    hexWord = swappedBytes.join('')
-    //caste the hex word to a decimal
-    finalPlane = parseInt(hexWord, 16)
-    //divide finalPlane by 10 and parse to a float
-    finalPlane = finalPlane / 10
-    
-    console.log(finalPlane)
+    #start:enabled, #stop:enabled {
+      background-color: #28a745;
+      cursor: pointer;
+    }
+
+    #start:enabled:hover, #stop:enabled:hover {
+      background-color: #218838;
+    }
+
+    #start:disabled:hover, #stop:disabled:hover {
+      background-color: #ccc;
+    }
+
+    #result {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 24px;
+    }
+  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <h1>Beurer FT95</h1>
+  <div class="button-container">
+    <button id="read">Connect with BLE device</button>
+    <button id="start" disabled>Start</button>
+    <button id="stop" disabled>Stop</button>
+  </div>
+  <div id="result"></div>
+
+  <script>
+    var deviceName = 'FT95';
+    var ThermometerService = '00001809-0000-1000-8000-00805f9b34fb';
+    var TemperatureCharacteristic = 0x2a1C;
+    var bluetoothDeviceDetected;
+    var gattCharacteristic;
+    var gattWriteableCharacteristic;
+    var resultElement = document.getElementById('result');
+
+    document.querySelector('#read').addEventListener('click', function() {
+      try {
+        if (isWebBluetoothEnabled()) { read(); }
+      } catch (error) {
+        resultElement.textContent = 'Error: ' + error;
+      }
+    });
+
+    document.querySelector('#start').addEventListener('click', function(event) {
+      try {
+        if (isWebBluetoothEnabled()) { start(); }
+      } catch (error) {
+        resultElement.textContent = 'Error: ' + error;
+      }
+    });
+
+    document.querySelector('#stop').addEventListener('click', function(event) {
+      try {
+        if (isWebBluetoothEnabled()) { stop(); }
+      } catch (error) {
+        resultElement.textContent = 'Error: ' + error;
+      }
+    });
+
+    function calculateValue(bytes) {
+      if (bytes.length !== 4) {
+        throw new Error('Input must be an array of 4 bytes');
+      }
+
+      // The first byte is the exponent
+      let exponent = 256 - bytes[0];
+
+      // The remaining bytes form the mantissa
+      let mantissa = (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
+
+      // Calculate the value
+      let value = mantissa * Math.pow(2, -exponent);
+
+      return value;
+    }
+
+    function isWebBluetoothEnabled() {
+      if (!navigator.bluetooth) {
+        resultElement.textContent = 'Web Bluetooth API is not available in this browser!';
+        return false;
+      }
+
+      return true;
+    }
+
+    function getDeviceInfo() {
+      let options = {
+        optionalServices: [ThermometerService],
+        filters: [
+          { "name": deviceName }
+        ]
+      };
+      resultElement.textContent = 'Requesting any Bluetooth Device...';
+      return navigator.bluetooth.requestDevice(options).then(device => {
+        bluetoothDeviceDetected = device;
+      }).catch(error => {
+        resultElement.textContent = 'Argh! ' + error;
+      });
+    }
+
+    function read() {
+      try {
+        return (bluetoothDeviceDetected ? Promise.resolve() : getDeviceInfo())
+          .then(connectGATT)
+          .then(_ => {
+            resultElement.textContent = 'PO60...';
+          })
+          .catch(error => {
+            resultElement.textContent = 'Waiting to start reading: ' + error;
+          });
+      } catch (error) {
+        resultElement.textContent = 'Error: ' + error;
+      }
+    }
+
+    function connectGATT() {
+      try {
+        if (bluetoothDeviceDetected.gatt.connected && gattCharacteristic) {
+          return Promise.resolve();
+        }
+
+        return bluetoothDeviceDetected.gatt.connect()
+          .then(server => {
+            resultElement.textContent = 'Getting GATT Service...';
+            return server.getPrimaryService(ThermometerService);
+          })
+          .then(service => {
+            resultElement.textContent = 'Getting GATT Characteristic...';
+            return service.getCharacteristic(TemperatureCharacteristic);
+          })
+          .then(characteristic => {
+            gattCharacteristic = characteristic;
+            gattCharacteristic.addEventListener('characteristicvaluechanged', handleChangedValue);
+            document.querySelector('#start').disabled = false;
+            document.querySelector('#stop').disabled = true;
+          });
+      } catch (error) {
+        resultElement.textContent = 'Error: ' + error;
+      }
+    }
 
 
 
-    //let result = calculateValue(swappedBytes);
-    console.log(swappedBytes);
-    // print the values of the DataView has hexidecimal
-    //console.log(new Uint8Array(value.buffer).toString(16))   
-    //console.log(new Uint8Array(value.buffer).toString(16))
-    // document.querySelector('#doorbell').disabled = false
-    // let decoder = new TextDecoder();
-    // console.log('Characteristic binary: ' + decoder.decode(value.toString()))
+    function extractFinalFormatValue(value) {
+      try {
+        let byte1 = value.getUint8(1);
+        let byte2 = value.getUint8(2);
+        let byte3 = value.getUint8(3);
+        let byte4 = value.getUint8(4);
+        let decimalBytes = [byte1, byte2, byte3, byte4];
+        let hexBytes = decimalBytes.map(byte => byte.toString(16));
+        let swappedBytes = [hexBytes[1], hexBytes[0]];
+        let hexWord = swappedBytes.join('');
+        let finalFormat = parseInt(hexWord, 16);
+        finalFormat = finalFormat / 10;
+        return finalFormat;
+      } catch (error) {
+        resultElement.textContent = 'Error: ' + error;
+      }
+    }
 
-    // console.log('> ' + now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds() + ' Value is ' + value)
-  }
+    function handleChangedValue(event) {
+      try {
+        let value = event.target.value;
+        value = value.buffer ? value : new DataView(value);
+        var now = new Date();
+        // Usage example:
+        resultElement.textContent = 'Casting bytes...';
+        let finalFormatValue = extractFinalFormatValue(value);
+        resultElement.textContent = finalFormatValue;
+      } catch (error) {
+        resultElement.textContent = 'Error: ' + error;
+      }
+    }
 
-  function start() {
-    gattCharacteristic.startNotifications()
-    .then(_ => {
-      console.log('Start reading...')
-      document.querySelector('#start').disabled = true
-      document.querySelector('#stop').disabled = false
-    })
-    .catch(error => {
-      console.log('[ERROR] Start: ' + error)
-    })
-  }
+    function start() {
+      try {
+        gattCharacteristic.startNotifications()
+          .then(_ => {
+            resultElement.textContent = 'Start reading...';
+            document.querySelector('#start').disabled = true;
+            document.querySelector('#stop').disabled = false;
+          })
+          .catch(error => {
+            resultElement.textContent = '[ERROR] Start: ' + error;
+          });
+      } catch (error) {
+        resultElement.textContent = 'Error: ' + error;
+      }
+    }
 
-  function stop() {
-    gattCharacteristic.stopNotifications()
-    .then(_ => {
-      console.log('Stop reading...')
-      document.querySelector('#start').disabled = false
-      document.querySelector('#stop').disabled = true
-    })
-    .catch(error => {
-      console.log('[ERROR] Stop: ' + error)
-    })
-  }
-
-  function doorbell() {
-    console.log ('Doorbell ringing...');
-    return (bluetoothDeviceDetected ? Promise.resolve() : getDeviceInfo())
-    .then(connectWriteableGATT)
-    .then(_ => {
-      console.log('Writing gattWriteableCharacteristic ...') 
-      const doorbell = new Uint8Array([0x99, 0x00, 0x19]).buffer;
-      gattWriteableCharacteristic.writeValue(doorbell)
-    })
-    .catch(error => {
-      console.log('Error writing to gattWriteableCharacteristic: ' + error)
-    })
-    // const doorbell = Uint8Array.of(1);
-  }
-  
-</script>
+    function stop() {
+      try {
+        gattCharacteristic.stopNotifications()
+          .then(_ => {
+            resultElement.textContent = 'Stop reading...';
+            document.querySelector('#start').disabled = false;
+            document.querySelector('#stop').disabled = true;
+          })
+          .catch(error => {
+            resultElement.textContent = '[ERROR] Stop: ' + error;
+          });
+      } catch (error) {
+        resultElement.textContent = 'Error: ' + error;
+      }
+    }
+  </script>
+</body>
+</html>
