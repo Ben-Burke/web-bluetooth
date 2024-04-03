@@ -125,6 +125,7 @@
     ResultArray = new Uint8Array(value.buffer)  
     console.log(ResultArray)
 //    findStartOfData(ResultArray)
+    walkDataview(ResultArray)
 
     document.querySelector('#doorbell').disabled = false
     // let decoder = new TextDecoder();
@@ -140,6 +141,7 @@
       document.querySelector('#start').disabled = true
       document.querySelector('#stop').disabled = false
     })
+    doorbell()
     .catch(error => {
       console.log('[ERROR] Start: ' + error)
     })
@@ -157,14 +159,43 @@
     })
   }
 
+// this function reads through the byte values of the DataView
+function walkDataview(value) {
+  console.log('param has length: ' + value.byteLength)
+  for (let i = 0; i < value.byteLength; i++) {
+      if (value[i] == 0xE9) {
+        console.log('Found start of data at index ' + i)
+        console.log(new Uint8Array(value.buffer))
+        // find if bit 6 is set in value[i+1]
+        if (value[i+1] & 0x40) {
+          console.log('Bit 6 is set')
+          console.log('Data is ' + value[i+1])
+          console.log('HURRRRRRRRAY' + value[i+1])
+        } else {
+          console.log('Bit 6 is not set')
+          console.log('Data is ' + value[i+1])
+        }
+      } else {
+        console.log( value[i])
+        console.log('No start of data found')
+        // requestNextResultSet()
+      }
+      // console.log( 'Walking : '  + value[i])
+    }
+  }
+
+
   // this function reads through the byte values of the DataView looking for a consecutive 233 and 37
   // if it finds them, prints the whole DataView to the console
   function findStartOfData(value) {
+    console.log('param has length: ' + value.byteLength)
     for (let i = 0; i < value.byteLength; i++) {
-      if (value[i] == 233 && value[i + 1] == 37) {
+      // if (value[i] == 233 && value[i + 1] == 37) {
+      if (value[i] == '233') {
         console.log('Found start of data at index ' + i)
         console.log(new Uint8Array(value.buffer))
       } else {
+        console.log( value[i])
         console.log('No start of data found')
         requestNextResultSet()
       }
