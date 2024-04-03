@@ -2,6 +2,7 @@
 <button id="start" disabled>Start</button>
 <button id="stop" disabled>Stop</button>
 <button id="doorbell" disabled>Ring Doorbell</button>
+<button id="nextplease" disabled>Next Result</button>
 
 <script>
   var deviceName = 'PO60'
@@ -26,6 +27,10 @@
 
   document.querySelector('#doorbell').addEventListener('click', function(event) {
     if (isWebBluetoothEnabled()) { doorbell() }
+  })
+
+  document.querySelector('#nextplease').addEventListener('click', function(event) {
+    if (isWebBluetoothEnabled()) { requestNextResultSet() }
   })
 
   function isWebBluetoothEnabled() {
@@ -116,8 +121,11 @@
     value = value.buffer ? value : new DataView(value);
     var now = new Date()
     // the next line prints the contents of the DataView to the console
-    console.log('Arg')    
-    console.log(new Uint8Array(value.buffer))
+    console.log('Arg - value changed')  
+    ResultArray = new Uint8Array(value.buffer)  
+    console.log(ResultArray)
+//    findStartOfData(ResultArray)
+
     document.querySelector('#doorbell').disabled = false
     // let decoder = new TextDecoder();
     // console.log('Characteristic binary: ' + decoder.decode(value.toString()))
@@ -149,6 +157,36 @@
     })
   }
 
+  // this function reads through the byte values of the DataView looking for a consecutive 233 and 37
+  // if it finds them, prints the whole DataView to the console
+  function findStartOfData(value) {
+    for (let i = 0; i < value.byteLength; i++) {
+      if (value[i] == 233 && value[i + 1] == 37) {
+        console.log('Found start of data at index ' + i)
+        console.log(new Uint8Array(value.buffer))
+      } else {
+        console.log('No start of data found')
+        requestNextResultSet()
+      }
+    }
+  }
+
+
+  function requestNextResultSet() {
+    console.log ('Requesting next result set...')
+    return (bluetoothDeviceDetected ? Promise.resolve() : getDeviceInfo())
+    .then(connectWriteableGATT)
+    .then(_ => {
+      console.log('Writing gattWriteableCharacteristic ...') 
+      const nextp = new Uint8Array([0x99, 0x01, 0x1A]).buffer;
+      gattWriteableCharacteristic.writeValue(nextp)
+    })
+
+    .catch(error => {
+      console.log('Error requesting Next Result Set: ' + error)
+    })
+  }
+
   function doorbell() {
     console.log ('Doorbell ringing...');
     return (bluetoothDeviceDetected ? Promise.resolve() : getDeviceInfo())
@@ -157,6 +195,8 @@
       console.log('Writing gattWriteableCharacteristic ...') 
       const doorbell = new Uint8Array([0x99, 0x00, 0x19]).buffer;
       gattWriteableCharacteristic.writeValue(doorbell)
+      document.querySelector('#nextplease').disabled = false
+      document.querySelector('#doorbell').disabled = true
     })
     .catch(error => {
       console.log('Error writing to gattWriteableCharacteristic: ' + error)
