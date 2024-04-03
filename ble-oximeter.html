@@ -33,9 +33,6 @@
     if (isWebBluetoothEnabled()) { requestNextResultSet() }
   })
 
-  // we define a Dataview called OldDataView to store the previous data when a new Uint8Array is Notified
-  var OldDataView = new DataView(new ArrayBuffer())
-
   function isWebBluetoothEnabled() {
     if (!navigator.bluetooth) {
       console.log('Web Bluetooth API is not available in this browser!')
@@ -123,98 +120,28 @@
     let value = event.target.value
     value = value.buffer ? value : new DataView(value);
     var now = new Date()
-    
     // the next line prints the contents of the DataView to the console
-    // console.log('Arg - value changed')  
+    console.log('Arg - value changed')  
     ResultArray = new Uint8Array(value.buffer)  
-    console.log(ResultArray)
+    // console.log(ResultArray)
 //    findStartOfData(ResultArray)
-    let buffIndex = walkDataview(ResultArray)
-    // if buffIndex is 0, do nothing - we haven't acquired the data yet
-    if (buffIndex == 0) {
-      return
-    }
+    let bufferSize = walkDataview(ResultArray)
 
-    //if buffIndex is < 8, we have a partial data set. Look up the values in OldDataView
-    if (buffIndex < 8) {
-      console.log('Partial data set')
-      console.log('Old Data View: ' + OldDataView)
-      console.log('New Data View: ' + ResultArray)
-      // create a new Uint8Array to hold the combined data
-      let combinedData = new Uint8Array(OldDataView.byteLength + ResultArray.byteLength)
-      // copy the OldDataView to the new array
-      combinedData.set(OldDataView)
-      // copy the ResultArray to the new array
-      combinedData.set(ResultArray, OldDataView.byteLength)
-      // copy the new array to the ResultArray
-      ResultArray = combinedData
-      console.log('Combined Data: ' + ResultArray)
-    }
-
-    // if buffIndex is equal to or greater than 8, we have a full data set, print the Spo2 and PR values to the console
-    if (buffIndex >= 8) {
-      for ( let j = 1; j < 20; j++ ) {
-        console.log('ResultArray[' + j + '] = ' + ResultArray[j]);
-      }
-
+    if (bufferSize) {
+      console.log('Buffer size is ' + bufferSize)
+      console.log("Stopping notifications")
+      stop()
+      document.querySelector('#nextplease').disabled = true
+      // let data = new Uint8Array(value.buffer, bufferSize)
+      // console.log('Data is ' + data)
     }
 
     document.querySelector('#doorbell').disabled = false
-    // copy ResultArray to OldDataView
-    OldDataView = ResultArray
     // let decoder = new TextDecoder();
     // console.log('Characteristic binary: ' + decoder.decode(value.toString()))
 
     // console.log('> ' + now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds() + ' Value is ' + value)
   }
-
-  
-// this function reads through the byte values of the DataView
-function walkDataview(value) {
-  // console.log('param has length: ' + value.byteLength)
-  for (let i = 0; i < value.byteLength; i++) {
-      if (value[i] == 0xE9) {
-        console.log('Found start of data at index ' + i)
-        console.log(new Uint8Array(value.buffer))
-        // find if bit 6 is set in value[i+1]
-        if (value[i+1] & 0x40) {
-          console.log('Bit 6 is set')
-          console.log('Data is ' + value[i+1])
-          console.log('HURRRRRRRRAY' + value[i+1])
-          return i
-        } else {
-          console.log('Bit 6 is not set')
-          console.log('Data is ' + value[i+1])
-          return 0
-        }
-      } else {
-        console.log('No start of data found')
-        return 0
-
-        // requestNextResultSet()
-      }
-      // console.log( 'Walking : '  + value[i])
-    }
-  }
-
-
-  // this function reads through the byte values of the DataView looking for a consecutive 233 and 37
-  // if it finds them, prints the whole DataView to the console
-  // function findStartOfData(value) {
-  //   console.log('param has length: ' + value.byteLength)
-  //   for (let i = 0; i < value.byteLength; i++) {
-  //     // if (value[i] == 233 && value[i + 1] == 37) {
-  //     if (value[i] == '233') {
-  //       console.log('Found start of data at index ' + i)
-  //       console.log(new Uint8Array(value.buffer))
-  //     } else {
-  //       console.log( value[i])
-  //       console.log('No start of data found')
-  //       requestNextResultSet()
-  //     }
-  //   }
-  // }
-
 
   function start() {
     gattCharacteristic.startNotifications()
@@ -240,6 +167,50 @@ function walkDataview(value) {
       console.log('[ERROR] Stop: ' + error)
     })
   }
+
+// this function reads through the byte values of the DataView
+function walkDataview(value) {
+  for (let i = 0; i < value.byteLength; i++) {
+      if (value[i] == 0xE9) {
+        console.log('Found start of data at index ' + i)
+        console.log(new Uint8Array(value.buffer))
+        // find if bit 6 is set in value[i+1]
+        if (value[i+1] & 0x40) {
+          console.log('Bit 6 is set')
+          console.log('Data is ' + value[i+1])
+          console.log('HURRRRRRRRAY' + value[i+1])
+          return i;
+        } else {
+          console.log('Bit 6 is not set')
+          console.log('Data is ' + value[i+1])
+        }
+      // } else {
+      //   console.log( value[i])
+      //   console.log('No start of data found')
+        // requestNextResultSet()
+      }
+      // console.log( 'Walking : '  + value[i])
+    }
+  }
+
+
+  // this function reads through the byte values of the DataView looking for a consecutive 233 and 37
+  // if it finds them, prints the whole DataView to the console
+  function findStartOfData(value) {
+    console.log('param has length: ' + value.byteLength)
+    for (let i = 0; i < value.byteLength; i++) {
+      // if (value[i] == 233 && value[i + 1] == 37) {
+      if (value[i] == '233') {
+        console.log('Found start of data at index ' + i)
+        console.log(new Uint8Array(value.buffer))
+      } else {
+        console.log( value[i])
+        console.log('No start of data found')
+        requestNextResultSet()
+      }
+    }
+  }
+
 
   function requestNextResultSet() {
     console.log ('Requesting next result set...')
