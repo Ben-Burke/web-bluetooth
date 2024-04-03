@@ -211,6 +211,16 @@ function walkDataview(value) {
     }
   }
 
+  function deleteRecord(value) {
+    console.log('deleting result record');
+    return (bluetoothDeviceDetected ? Promise.resolve() : getDeviceInfo())
+    .then(connectWriteableGATT)
+    .then(_ => {
+      console.log('Writing gattWriteableCharacteristic ...') 
+      const deleteRecord = new Uint8Array([0x99, 0x7F, 0x40]).buffer;
+      gattWriteableCharacteristic.writeValue(deleteRecord);
+    })
+  }
 
   function requestNextResultSet() {
     console.log ('Requesting next result set...')
@@ -219,7 +229,7 @@ function walkDataview(value) {
     .then(_ => {
       console.log('Writing gattWriteableCharacteristic ...') 
       const nextp = new Uint8Array([0x99, 0x01, 0x1A]).buffer;
-      gattWriteableCharacteristic.writeValue(nextp)
+      gattWriteableCharacteristic.writeValue(nextp);
     })
 
     .catch(error => {
