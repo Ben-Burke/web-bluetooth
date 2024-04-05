@@ -253,7 +253,7 @@ function walkDataview(value) {
 
 
 
-  function requestNextResultSet() {
+  async function requestNextResultSet() {
     console.log ('Requesting next result set...')
     return (bluetoothDeviceDetected ? Promise.resolve() : getDeviceInfo())
     .then(_ => {
