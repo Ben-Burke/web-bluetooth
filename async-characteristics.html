@@ -1,0 +1,167 @@
+<button id="read">Connect with BLE device</button>
+<button id="start" disabled>Start</button>
+<button id="stop" disabled>Stop</button>
+<button id="doorbell" disabled>Ring Doorbell</button>
+
+<script>
+var BLEName = 'PO60'
+var deviceName 
+var bleService = '0000ff12-0000-1000-8000-00805f9b34fb'
+var bleCharacteristic = 0xff02
+var bleDoorbell = 0xff01
+var deviceNameDetected
+var gattCharacteristic
+var gattWriteableCharacteristic
+
+var bluetoothDeviceDetected
+
+var minSpo02 = 0
+var maxSpo02 = 0
+var avgSpo02 = 0
+var minPulseRate = 0
+var maxPulseRate = 0
+var avgPulseRate = 0
+
+var resultsDelivered = false
+const nextp = new Uint8Array([0x99, 0x01, 0x1A]).buffer;
+const doorbellMessage = new Uint8Array([0x99, 0x00, 0x19]).buffer;
+
+const deleteRecordMask= new Uint8Array([0x99, 0x7F, 0x40]).buffer;
+
+  document.querySelector('#read').addEventListener('click', function() {
+    if (isWebBluetoothEnabled()) { read() }
+  })
+
+  document.querySelector('#start').addEventListener('click', function(event) {
+    if (isWebBluetoothEnabled()) { start() }
+  })
+
+  document.querySelector('#stop').addEventListener('click', function(event) {
+    if (isWebBluetoothEnabled()) { stop() }
+  })
+
+  document.querySelector('#doorbell').addEventListener('click', function(event) {
+    if (isWebBluetoothEnabled()) { doorbell() }
+  })
+
+  
+var deviceName;
+var bleCharacteristic;
+
+
+function isWebBluetoothEnabled() {
+    if (!navigator.bluetooth) {
+      console.console.log('Web Bluetooth API is not available in this browser!')
+      return false
+    }
+
+    return true
+  }
+
+async function read() {
+  try {
+    if (!deviceName) {
+        console.log('Requesting Bluetooth Device...');
+      await requestDevice();
+    }
+    console.log('Connecting to GATT Server...');
+    await connectDeviceAndCacheCharacteristics();
+
+    console.log('Reading Custom Service ...');
+    await bleCharacteristic.readValue();
+  } catch(error) {
+    console.log('Argh! ' + error);
+  }
+}
+
+async function requestDevice() {
+  console.log('Requesting Bluetooth Device...');
+  
+  let options = {
+      optionalServices: [bleService],
+      filters: [
+        { "name": BLEName }
+      ]
+    }
+  return navigator.bluetooth.requestDevice(options).then(device => {
+      bluetoothDeviceDetected = device
+    }).catch(error => {
+      console.log('Argh! ' + error)
+    })
+  }
+
+
+async function connectDeviceAndCacheCharacteristics() {
+  if (deviceName.gatt.connected && bleCharacteristic) {
+    return;
+  }
+
+  console.log('Connecting to GATT Server...');
+  const server = await bluetoothDeviceDetected.gatt.connect();
+
+  console.log('Getting Custom Service...');
+  const service = await server.getPrimaryService(bleService);
+
+  console.log('Getting Custom Characteristic...');
+  bleCharacteristic = await service.getCharacteristic(bleCharacteristic);
+
+  bleCharacteristic.addEventListener('characteristicvaluechanged',
+      handleValueChanged);
+  document.querySelector('#startNotifications').disabled = false;
+  document.querySelector('#stopNotifications').disabled = true;
+}
+
+/* This function will be called when `readValue` resolves and
+ * characteristic value changes since `characteristicvaluechanged` event
+ * listener has been added. */
+function handleValueChanged(event) {
+  let batteryLevel = event.target.value.getUint8(0);
+  console.log('> Battery Level is ' + batteryLevel + '%');
+}
+
+async function start() {
+  try {
+    console.log('Starting Battery Level Notifications...');
+    await bleCharacteristic.startNotifications();
+
+    console.log('> Notifications started');
+    document.querySelector('#startNotifications').disabled = true;
+    document.querySelector('#stopNotifications').disabled = false;
+  } catch(error) {
+    console.log('Argh! ' + error);
+  }
+}
+
+async function stop() {
+  try {
+    console.log('Stopping Notifications...');
+    await bleCharacteristic.stopNotifications();
+
+    console.log('> Notifications stopped');
+    document.querySelector('#start').disabled = false;
+    document.querySelector('#stop').disabled = true;
+  } catch(error) {
+    console.log('Argh! ' + error);
+  }
+}
+
+function onResetButtonClick() {
+  if (bleCharacteristic) {
+    bleCharacteristic.removeEventListener('characteristicvaluechanged',
+        handleBatteryLevelChanged);
+    bleCharacteristic = null;
+  }
+  // Note that it doesn't disconnect device.
+  deviceName = null;
+  console.log('> Bluetooth Device reset');
+}
+
+async function onDisconnected() {
+  console.log('> Bluetooth Device disconnected');
+  try {
+    await connectDeviceAndCacheCharacteristics()
+  } catch(error) {
+    console.log('Argh! ' + error);
+  }
+}
+</script>
