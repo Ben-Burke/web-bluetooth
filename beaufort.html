@@ -2,7 +2,7 @@
 <button id="ReadOne">Read Once</button>
 <button id="startRead">Start Read notifications</button>
 <button id="startWrite">Write Custom Service Start</button>
-<button id="startNext">Write Custom Service Next</button>
+<button id="writeNext">Write Custom Service Next</button>
 <button id="deleteRecord">Write Custom Service Delete</button>
 
 
@@ -92,7 +92,22 @@ class PO {
   const deleteRecord = new Uint8Array([0x99, 0x7F, 0x40]).buffer;
   const doorbell = new Uint8Array([0x99, 0x00, 0x19]).buffer;
 
+document.querySelector('#startWrite').addEventListener('click', async event => {
+    try {
+        await pO.writeCustomService(doorbell);
+    } catch(error) {
+        console.log(error);
+    }
+    });
 
+document.querySelector('#writeNext').addEventListener('click', async event => {
+    try {
+        await pO.writeCustomService(nextPacket);
+    } catch(error) {
+        console.log(error);
+    }
+    });
+  
 document.querySelector('#deleteRecord').addEventListener('click', async event => {
         try {
             await pO.request();
@@ -103,15 +118,6 @@ document.querySelector('#deleteRecord').addEventListener('click', async event =>
         }
         });
 
-document.querySelector('#startNext').addEventListener('click', async event => {
-    try {
-        await pO.request();
-        await pO.connect();
-        await pO.writeCustomService(nextPacket);
-    } catch(error) {
-        console.log(error);
-    }
-    });  
 
 document.querySelector('#ReadOne').addEventListener('click', async event => {
         try {
