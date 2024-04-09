@@ -68,13 +68,16 @@ class PO {
       characteristic.removeEventListener('characteristicvaluechanged', listener);
     }
 
-    listener (event) {
-    let value = event.target.value;
-    value = value.buffer ? value : new DataView(value);
-    console.log('Received value: ' + value.getUint8(0));
-}
+    
 
-  
+    listener (event) {
+      let value = event.target.value;
+      value = value.buffer ? value : new DataView(value);
+      ResultArray = new Uint8Array(value.buffer)  
+      walkDataview(ResultArray);
+    }
+
+   
     disconnect() {
       if (!this.device) {
         return Promise.reject('Device is not connected.');
@@ -86,11 +89,52 @@ class PO {
       console.log('Device is disconnected.');
     }
   }
+
+
+
+function walkDataview(value) {
+      console.log('Walking dataview');
+      for (let i = 0; i < value.byteLength; i++) {
+          if (value[i] == 0xE9) {
+            console.log('Found start of data at index ' + i)
+            console.log(new Uint8Array(value.buffer))
+            // find if bit 6 is set in value[i+1]
+            if (value[i+1] & 0x40) {
+              console.log('Bit 6 is set')
+              console.log('Data is ' + value[i+1])
+              console.log('HURRRRRRRRAY' + value[i+1])
+              if ( i < 8 ) {
+                console.log('we are going to need the previous packet')
+              } else {
+                maxSpo02 = value[i-8];
+                minSpo02 = value[i-7];
+                avgSpo02 = value[i-6];
+                maxPulseRate = value[i-5];
+                minPulseRate = value[i-4];
+                avgPulseRate = value[i-3];
+                return i;
+              } 
+            }
+              console.log('Bit 6 is not set')
+              console.log('Data is ' + value[i+1])
+            }
+          }
+        }
+    
   
-  var pO = new PO();
+  let pO = new PO();
   const nextPacket = new Uint8Array([0x99, 0x01, 0x1A]).buffer;
   const deleteRecord = new Uint8Array([0x99, 0x7F, 0x40]).buffer;
   const doorbell = new Uint8Array([0x99, 0x00, 0x19]).buffer;
+  let ResultArray = new Uint8Array();
+
+  let minSpo02 = 0
+  let maxSpo02 = 0
+  let avgSpo02 = 0
+  let minPulseRate = 0
+  let maxPulseRate = 0
+  let avgPulseRate = 0
+
 
 document.querySelector('#startWrite').addEventListener('click', async event => {
     try {
