@@ -42,17 +42,17 @@ class PO {
     }
     
     async readCustomService() {
-      console.log('Reading value from 0xFF02.');
+      console.log('Reading newArray from 0xFF02.');
       const service = await this.device.gatt.getPrimaryService("0000ff12-0000-1000-8000-00805f9b34fb");
       const characteristic = await service.getCharacteristic(0xFF02);
-      await characteristic.readValue();
+      await characteristic.readnewArray();
     }
   
     async writeCustomService(data) {
-      console.log('Write value to 0xFF01.');
+      console.log('Write newArray to 0xFF01.');
       const service = await this.device.gatt.getPrimaryService("0000ff12-0000-1000-8000-00805f9b34fb");
       const characteristic = await service.getCharacteristic(0xFF01);
-      await characteristic.writeValue(data);
+      await characteristic.writenewArray(data);
     }
   
     async startCustomServiceNotifications(listener) {
@@ -60,22 +60,22 @@ class PO {
       const service = await this.device.gatt.getPrimaryService("0000ff12-0000-1000-8000-00805f9b34fb");
       const characteristic = await service.getCharacteristic(0xFF02);
       await characteristic.startNotifications();
-      characteristic.addEventListener('characteristicvaluechanged', listener);
+      characteristic.addEventListener('characteristicnewArraychanged', listener);
     }
   
     async stopCustomServiceNotifications(listener) {
       const service = await this.device.gatt.getPrimaryService("0000ff12-0000-1000-8000-00805f9b34fb");
       const characteristic = await service.getCharacteristic(0xFF01);
       await characteristic.stopNotifications();
-      characteristic.removeEventListener('characteristicvaluechanged', listener);
+      characteristic.removeEventListener('characteristicnewArraychanged', listener);
     }
 
     
 
     listener (event) {
-      let value = event.target.value;
-      value = value.buffer ? value : new DataView(value);
-      ResultArray = new Uint8Array(value.buffer)  
+      let newArray = event.target.newArray;
+      newArray = newArray.buffer ? newArray : new DataView(newArray);
+      ResultArray = new Uint8Array(newArray.buffer)  
       walkDataview(ResultArray);
     }
 
@@ -106,48 +106,56 @@ class PO {
   let maxPulseRate = 0;
   let avgPulseRate = 0;
 
-  const resultsValuesArray = [minSpo02, maxSpo02, avgSpo02, minPulseRate, maxPulseRate, avgPulseRate];
+  const resultsArraysArray = [minSpo02, maxSpo02, avgSpo02, minPulseRate, maxPulseRate, avgPulseRate];
 
 
   
   let endOfData = false;
 
+function processArrays(oldArray, newArray, index) {
+  // console.log('Processing arrays');
+  if ( index <= 7 ) {
+      resultsArraysArray[0] = newArray[i-7];
+      resultsArraysArray[1] = newArray[i-6];
+      resultsArraysArray[2] = newArray[i-5];
+      resultsArraysArray[3] = newArray[i-4];
+      resultsArraysArray[4] = newArray[i-3];
+      resultsArraysArray[5] = newArray[i-2];
+      endOfData = true;
+    } else {
+    // if the index is greater than 7, then we need to read the tail end of the oldArray
+      for ( j = 7; j > 0; j-- ) {
+        resultsArraysArray[j] = oldArray[oldArray.byteLength - j];
+        endOfData = true;
+      }
 
-function walkDataview(value) {
+    }
+  }
+
+
+
+function walkDataview(newArray) {
       console.log('Walking dataview');
-      for (let i = 0; i < value.byteLength; i++) {
-          if (value[i] == 0xE9) {
+      PreviousResultArray = Array.from(newArray);
+      for (let i = 0; i < newArray.byteLength; i++) {
+          if (newArray[i] == 0xE9) {
             console.log('Found start of data at index ' + i)
-            console.log(new Uint8Array(value.buffer))
-            // find if bit 6 is set in value[i+1]
-            if (value[i+1] & 0x40) {
+            console.log(new Uint8Array(newArray.buffer))
+            // find if bit 6 is set in newArray[i+1]
+            if (newArray[i+1] & 0x40) {
               console.log('Bit 6 is set')
-              console.log('Data is ' + value[i+1])
-              console.log('HURRRRRRRRAY' + value[i+1])
-              if ( i < 8 ) {
-                console.log('we are going to need the previous packet')
-              } else {
-                resultsValuesArray[0] = value[i-7];
-                resultsValuesArray[1] = value[i-6];
-                resultsValuesArray[2] = value[i-5];
-                resultsValuesArray[3] = value[i-4];
-                resultsValuesArray[4] = value[i-3];
-                resultsValuesArray[5] = value[i-2];
-                // maxSpo02 = value[i-8];
-                // minSpo02 = value[i-7];
-                // avgSpo02 = value[i-6];
-                // maxPulseRate = value[i-5];
-                // minPulseRate = value[i-4];
-                // avgPulseRate = value[i-3];
-                endOfData = true;
-                return i;
-              } 
-            }
+              console.log('Data is ' + newArray[i+1])
+              console.log('HURRRRRRRRAY' + newArray[i+1])
+              processArrays(PreviousResultArray, newArray, i);
+              
+            } else {
+            
               console.log('Bit 6 is not set')
-              console.log('Data is ' + value[i+1])
+              console.log('Data is ' + newArray[i+1])
+            
             }
           }
-        }
+        
     
   
   
@@ -223,7 +231,7 @@ document.querySelector('#startRead').addEventListener('click', async event => {
       
       
 
-      console.log('And the results are: ' + resultsValuesArray);
+      console.log('And the results are: ' + resultsnewArraysArray);
       
     //   await pO.startCustomServiceNotifications();
     //   kick = await pO.writeCustomService(doorbell);
