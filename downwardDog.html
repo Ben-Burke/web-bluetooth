@@ -1,4 +1,3 @@
-<button id="button">Connect with BLE device</button>
 <button id="ForceDisconnect">ForceDisconnect</button>
 <button id="Everything">Do All Actions</button>
 <button id="ReadOne">Read Once</button>
@@ -95,7 +94,7 @@ class PO {
   let pO = new PO();
   const nextPacket = new Uint8Array([0x99, 0x01, 0x1A]).buffer;
   const deleteRecord = new Uint8Array([0x99, 0x7F, 0x40]).buffer;
-  const doorbell = new Uint8Array([0x99, 0x00, 0x19]).buffer;
+  const startPacket = new Uint8Array([0x99, 0x00, 0x19]).buffer; 
   let ResultArray = new Uint8Array();
   let PreviousResultArray = new Uint8Array();
 
@@ -154,7 +153,7 @@ function walkDataview(value) {
 
 document.querySelector('#startWrite').addEventListener('click', async event => {
     try {
-        await pO.writeCustomService(doorbell);
+        await pO.writeCustomService(startPacket);
     } catch(error) {
         console.log(error);
     }
@@ -205,8 +204,8 @@ document.querySelector('#startRead').addEventListener('click', async event => {
       console.log('Connected to Device. Starting notifications for 0xFF02.');
       await pO.startCustomServiceNotifications(pO.listener);
       console.log('Notifications Started. Waiting for data...'); 
-      console.log('Pressing Doorbell...');
-      await pO.writeCustomService(doorbell);
+      console.log('Pressing startPacket...');
+      await pO.writeCustomService(startPacket);
       console.log('Doorbell Pressed. Waiting for data...');
       await pO.readCustomService();
       console.log('Data read. Sending command for next packet');
@@ -226,7 +225,7 @@ document.querySelector('#startRead').addEventListener('click', async event => {
       console.log('And the results are: ' + resultsValuesArray);
       
     //   await pO.startCustomServiceNotifications();
-    //   kick = await pO.writeCustomService(doorbell);
+    //   kick = await pO.writeCustomService(startPacket);
       /* Do something with pO... */
     } catch(error) {
       console.log(error);
@@ -247,7 +246,7 @@ document.querySelector('#startRead').addEventListener('click', async event => {
       await pO.request();
       await pO.connect();
     //   await pO.startCustomServiceNotifications();
-    //   kick = await pO.writeCustomService(doorbell);
+    //   kick = await pO.writeCustomService(startPacket);
       /* Do something with pO... */
     } catch(error) {
       console.log(error);
