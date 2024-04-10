@@ -108,12 +108,18 @@ function walkDataview(value) {
               if ( i < 8 ) {
                 console.log('we are going to need the previous packet')
               } else {
-                maxSpo02 = value[i-8];
-                minSpo02 = value[i-7];
-                avgSpo02 = value[i-6];
-                maxPulseRate = value[i-5];
-                minPulseRate = value[i-4];
-                avgPulseRate = value[i-3];
+                resultsValuesArray[0] = value[i-7];
+                resultsValuesArray[1] = value[i-6];
+                resultsValuesArray[2] = value[i-5];
+                resultsValuesArray[3] = value[i-4];
+                resultsValuesArray[4] = value[i-3];
+                resultsValuesArray[5] = value[i-2];
+                // maxSpo02 = value[i-8];
+                // minSpo02 = value[i-7];
+                // avgSpo02 = value[i-6];
+                // maxPulseRate = value[i-5];
+                // minPulseRate = value[i-4];
+                // avgPulseRate = value[i-3];
                 endOfData = true;
                 return i;
               } 
@@ -214,6 +220,8 @@ document.querySelector('#startRead').addEventListener('click', async event => {
       await pO.stopCustomServiceNotifications(pO.listener);
       console.log('Notifications Stopped. Disconnecting...');
       await pO.disconnect();
+      
+      
 
       console.log('And the results are: ' + resultsValuesArray);
       
