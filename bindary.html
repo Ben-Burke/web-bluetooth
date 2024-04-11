@@ -75,7 +75,9 @@ class PO {
     listener (event) {
       let value = event.target.value;
       value = value.buffer ? value : new DataView(value);
-      ResultArray = new Uint8Array(value.buffer)  
+      ResultArray = new Uint8Array(value.buffer)
+      // make a copy of ResultArray into PreviousResultArray including all the values
+      PreviousResultArray = new Uint8Array(ResultArray);
       walkDataview(ResultArray);
     }
 
