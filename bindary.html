@@ -133,8 +133,11 @@ function walkDataview(value) {
   
   let pO = new PO();
   const nextPacket = new Uint8Array([0x99, 0x01, 0x1A]).buffer;
-  const deleteRecord = new Uint8Array([0x99, 0x7F, 0x40]).buffer;
+  const deleteRecordCMD = new Uint8Array([0x99, 0x7F, 0x40]).buffer;
   const doorbell = new Uint8Array([0x99, 0x00, 0x19]).buffer;
+
+  //trying this
+  
   let ResultArray = new Uint8Array();
   let PreviousResultArray = new Uint8Array();
 
@@ -211,10 +214,11 @@ document.querySelector('#startRead').addEventListener('click', async event => {
       await pO.readCustomService();
       console.log('Data read. Sending command for next packet');
       while ( !endOfData ) {
+        await pO.writeCustomService(deleteRecordCMD);
+        console.log('Record deleted. Waiting for data...');
+
         await pO.writeCustomService(nextPacket);
         console.log('Next packet sent. Waiting for data...');
-        // await pO.writeCustomService(deleteRecord);
-        // console.log('Record deleted. Waiting for data...');
       }
       console.log('End of data reached. Stopping Notifications...');
       await pO.stopCustomServiceNotifications(pO.listener);
