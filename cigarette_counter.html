@@ -1,0 +1,41 @@
+<!-- This is a single page PWA that allows a user to count every cigarette they smoke
+ The app keeps record via local service worker. It records the Count of cigarettes on each day and
+keeps totals by day, week and month.
+There are optional details such as. Rate how worthwhile this cigarette from 1 to 5 where 1 is Incredible and 5 was Awful 
+ -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cigarette Counter</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Cigarette Counter</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Today</h2>
+            <p>Count: <span id="todayCount">0</span></p>
+            <p>Worthwhile: <span id="todayWorthwhile">0</span></p>
+        </section>
+        <section>
+            <h2>Week</h2>
+            <p>Count: <span id="weekCount">0</span></p>
+            <p>Worthwhile: <span id="weekWorthwhile">0</span></p>
+        </section>
+        <section>
+            <h2>Month</h2>
+            <p>Count: <span id="monthCount">0</span></p>
+            <p>Worthwhile: <span id="monthWorthwhile">0</span></p>
+        </section>
+    </main>
+    <footer>
+        <button id="addCigarette" onclick="addCigarette()">Add Cigarette</button>
+        <button id="reset" onclick="reset()">Reset</button>
+    </footer>
+    <script src="cigarette_counter.js"></script>
+</html>
