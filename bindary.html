@@ -94,7 +94,16 @@ class PO {
     }
   }
 
-
+// This function calculates the checksum for a PO60 packet
+// The checksum is calculated by adding all the bytes in the packet (including the header) and then returning the lowest 7 bits of the 
+// result
+function calculateChecksum(packet) {
+    let sum = 0;
+    for (let i = 0; i < packet.byteLength; i++) {
+        sum += packet[i];
+    }
+    return sum & 0x7F;
+}
 
 function walkDataview(value) {
       console.log('Walking dataview');
@@ -135,7 +144,10 @@ function walkDataview(value) {
   
   let pO = new PO();
   const nextPacket = new Uint8Array([0x99, 0x01, 0x1A]).buffer;
-  const deleteRecordCMD = new Uint8Array([0x99, 0x7F, 0x40]).buffer;
+  const srtDeleteRecord = new Uint8Array([0x99, 0x7F]).buffer;
+  chksumByte = calculateChecksum(srtDeleteRecord);
+  const deleteRecordCMD = new Uint8Array([0x99, 0x7F, 0x18]).buffer;
+
   const doorbell = new Uint8Array([0x99, 0x00, 0x19]).buffer;
 
   //trying this
