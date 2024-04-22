@@ -128,8 +128,8 @@ class PO {
       await pO.writeCustomService(doorbell);
       console.log('Doorbell Pressed. Waiting for data...');
       await pO.readCustomService();
-      // console.log('Custom Service read.. Deleting the first record...');
-      // await pO.writeCustomService(deleteRecordCMD);
+      console.log('Custom Service read.. Deleting the first record...');
+      await pO.writeCustomService(deleteRecordCMD);
       console.log('Data read. Sending command for next packet');
       await pO.writeCustomService(deleteRecordCMD);
       console.log('Record deleted. Sending Next packet...');
