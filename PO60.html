@@ -4,6 +4,31 @@
 <button id="purge">Purge PO60 messages</button>
 
 
+<div>
+  <label for="minSpo02">Minimum Spo02:</label>
+  <input type="text" id="minSpo02" />
+</div>
+<div>
+  <label for="maxSpo02">Maximum Spo02:</label>
+  <input type="text" id="maxSpo02" />
+</div>
+<div>
+  <label for="avgSpo02">Average Spo02:</label>
+  <input type="text" id="avgSpo02" />
+</div>
+<div>
+  <label for="minPulseRate">Minimum Pulse Rate:</label>
+  <input type="text" id="minPulseRate" />
+</div>
+<div>
+  <label for="maxPulseRate">Maximum Pulse Rate:</label>
+  <input type="text" id="maxPulseRate" />
+</div>
+<div>
+  <label for="avgPulseRate">Average Pulse Rate:</label>
+  <input type="text" id="avgPulseRate" />
+</div>
+
 
 
 <script src="./PO60_library.js"> </script>
@@ -110,6 +135,16 @@ document.querySelector('#checksum').addEventListener('click', async event => {
       await pO.stopCustomServiceNotifications(pO.listener);
       console.log('Notifications Stopped. Disconnecting...');
       await pO.disconnect();
+
+      // populate the text boxes minSpo02, maxSpo02, avgSpo02, minPulseRate, maxPulseRate, avgPulseRate
+      document.getElementById('minSpo02').value = minSpo02;
+      document.getElementById('maxSpo02').value = maxSpo02;
+      document.getElementById('avgSpo02').value = avgSpo02;
+      document.getElementById('minPulseRate').value = minPulseRate;
+      document.getElementById('maxPulseRate').value = maxPulseRate;
+      document.getElementById('avgPulseRate').value = avgPulseRate;
+      
+
 
       /* Do something with pO... */
     } catch(error) {

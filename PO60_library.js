@@ -149,18 +149,27 @@ function DecodeNotificationMessageType(ResultArray) {
         countOfStaleResults = ResultArray[2];
         console.log('Count of Stale Results: ' + countOfStaleResults);
         break;
-      case 0x99:
+      case 0xE9:
         // code for message type 0x99
-        console.log('Message Type: Get Results');
+        console.log('Message Type: Results Block Data');
+        maxSpo02 = ResultArray[17];
+        minSpo02 = ResultArray[18];
+        avgSpo02 = ResultArray[19];
         break;
       default:
         // code for unknown message type
+        if ( ResultArray.length == 4) {
+          console.log('Message Type: Final Bytes');
+          maxPulseRate = ResultArray[0];
+          minPulseRate = ResultArray[1];
+          avgPulseRate = ResultArray[2];
+        }
         console.log('Unknown Message Type: ' + messageType.toString(16));
     }
 
-    let messageLength = ResultArray[1];
-    let messageData = ResultArray.slice(2, messageLength + 2);
-    console.log('Message Type: ' + messageType.toString(16));
-    console.log('Message Length: ' + messageLength);
-    console.log('Message Data: ' + messageData);
+    // let messageLength = ResultArray[1];
+    // let messageData = ResultArray.slice(2, messageLength + 2);
+    // console.log('Message Type: ' + messageType.toString(16));
+    // console.log('Message Length: ' + messageLength);
+    // console.log('Message Data: ' + messageData);
   }
