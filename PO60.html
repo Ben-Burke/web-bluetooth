@@ -1,0 +1,100 @@
+<button id="Everything">Do All Actions</button>
+<button id="checksum">Checksum</button>
+<button id="storage">Device Storage</button>
+<button id="purge">Purge PO60 messages</button>
+
+
+
+
+<script src="./PO60_library.js"> </script>
+
+
+<script>
+
+
+let pO = new PO();
+
+document.querySelector('#checksum').addEventListener('click', async event => {
+    // let packet = new Uint8Array([0x99, 0x00, 0x19]);
+    console.log('in Checksum click event...');
+    srt = new Uint8Array([0x99, 0x7F]);
+    console.log('I am here');
+    debugPrint(' about to print the str.buffer')
+    console.log('srt: ' + srt);
+    let csum = calculateChecksum(srt);
+    debugPrint('Checksum: ' + csum.toString(16));
+  });
+
+
+  
+
+
+  document.querySelector('#storage').addEventListener('click', async event => {
+    console.log('in Storage click event...');
+    // let packet = new Uint8Array([0x99, 0x00, 0x19]);
+    // srt = new Uint8Array([0xE0,0x05, 0x08, 0x00, 0x08, 0x00, 0x75]);
+    console.log('I am here reading the storage information...');
+    await pO.request();
+    await pO.connect();
+    debugPrint('Connected to Device. Starting notifications for 0xFF02.');
+    await pO.startCustomServiceNotifications(pO.listener);
+    debugPrint('Reqesting Storage...');
+    await pO.writeCustomService(getStorageCMD);
+  });
+
+  document.querySelector('#purge').addEventListener('click', async event => {
+    console.log('in Purge click event...');
+    // let packet = new Uint8Array([0x99, 0x00, 0x19]);
+    // srt = new Uint8Array([0xE0,0x05, 0x08, 0x00, 0x08, 0x00, 0x75]);
+    // purgeCMD = new Uint8Array([0x90, 0x05, 0x16]);
+    console.log('I am here purging the PO60 messages...');
+    // await pO.request();
+    // await pO.connect();
+    // debugPrint('Connected to Device. Starting notifications for 0xFF02.');
+    // await pO.startCustomServiceNotifications(pO.listener);
+    debugPrint('Purging PO60 messages...');
+    // debugPrint('Reqesting Storage...');
+    // await pO.writeCustomService(getStorageCMD);
+    debugPrint('Purging PO60 messages...' + countOfStaleResults);
+    for ( let i = 1; i < countOfStaleResults; i++) {
+      await pO.writeCustomService(deleteRecordCMD);
+    }
+    console.log('End of Steps. Stopping Notifications...');
+      await pO.stopCustomServiceNotifications(pO.listener);
+      console.log('Notifications Stopped. Disconnecting...');
+      await pO.disconnect();
+  });
+
+  document.querySelector('#Everything').addEventListener('click', async event => {
+    try {
+      await pO.request();
+      await pO.connect();
+      debugPrint('Connected to Device. Starting notifications for 0xFF02.');
+      await pO.startCustomServiceNotifications(pO.listener);
+      debugPrint('Pressing Doorbell...');
+      await pO.writeCustomService(doorbell);
+      debugPrint('Doorbell Pressed. Waiting for data...');
+      await pO.readCustomService();
+      debugPrint('Custom Service read.. Deleting the first record...');
+      await pO.writeCustomService(deleteRecordCMD);
+      debugPrint('Data read. Sending command for next packet');
+      await pO.writeCustomService(deleteRecordCMD);
+      debugPrint('Record deleted. Sending Next packet...');
+
+      await pO.writeCustomService(nextPacket);
+      debugPrint('Next packet sent. Deleting the record...');
+      await pO.writeCustomService(deleteRecordCMD);
+
+      console.log('End of Steps. Stopping Notifications...');
+      await pO.stopCustomServiceNotifications(pO.listener);
+      console.log('Notifications Stopped. Disconnecting...');
+      await pO.disconnect();
+
+      /* Do something with pO... */
+    } catch(error) {
+      console.log(error);
+    }
+  });
+
+
+</script>
