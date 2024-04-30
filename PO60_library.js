@@ -1,16 +1,20 @@
 
 
+// Bluetooth UUIDs and device names
+let bluetoothDevicePO60 = 'PO60';
+let bleServiceSPo2 = '0000ff12-0000-1000-8000-00805f9b34fb'
 
 
+
+//PO60 Device Commands
 const nextPacket = new Uint8Array([0x99, 0x01, 0x1A]).buffer;
 const deleteRecordCMD = new Uint8Array([0x99, 0x7F, 0x18]).buffer;
-
 const doorbell = new Uint8Array([0x99, 0x00, 0x19]).buffer;
-
 let getStorageCMD = new Uint8Array([0x90, 0x05, 0x15]);
 
 
 
+// Run time persistent variables
 let ResultArray = new Uint8Array();
 let PreviousResultArray = new Uint8Array();
 
@@ -25,9 +29,7 @@ let countOfStaleResults = 0;
 
 const resultsValuesArray = [minSpo02, maxSpo02, avgSpo02, minPulseRate, maxPulseRate, avgPulseRate];
 
-
-
-let endOfData = false;
+let debug = true;
 
 
 class PO {
@@ -40,8 +42,8 @@ class PO {
     async request() {
       let options = {
         "filters": [{
-          "name": "PO60",
-          "services": ["0000ff12-0000-1000-8000-00805f9b34fb"]
+          "name": bluetoothDevicePO60,
+          "services": [bleServiceSPo2]
         }]
       };
       this.device = await navigator.bluetooth.requestDevice(options);
@@ -51,6 +53,7 @@ class PO {
       this.device.addEventListener('gattserverdisconnected', this.onDisconnected);
       console.log('BLE Device selected:', this.device);
     }
+    
     
     async connect() {
       if (!this.device) {
@@ -115,7 +118,15 @@ class PO {
     }
   }
 
-  
+  function isWebBluetoothEnabled() {
+    if (!navigator.bluetooth) {
+      console.log('Web Bluetooth API is not available in this browser!')
+      return false
+    }
+
+    return true
+  }
+
  
 
 // this function will take the passed parameter and pass to console.log IF the debug variable is true
@@ -173,3 +184,25 @@ function DecodeNotificationMessageType(ResultArray) {
     // console.log('Message Length: ' + messageLength);
     // console.log('Message Data: ' + messageData);
   }
+
+  // This function keeps calling "toTry" until promise resolves or has
+// retried "max" number of times. First retry has a delay of "delay" seconds.
+// "success" is called upon success.
+async function exponentialBackoff(max, delay, toTry, success, fail) {
+    try {
+        const result = await toTry();
+        success(result);
+    } catch(error) {
+        if (max === 0) {
+            return fail();
+        }
+        time('Retrying in ' + delay + 's... (' + max + ' tries left)');
+        setTimeout(function() {
+            exponentialBackoff(--max, delay * 2, toTry, success, fail);
+        }, delay * 1000);
+    }
+}
+
+function time(text) {
+    log('[' + new Date().toJSON().substr(11, 8) + '] ' + text);
+}
