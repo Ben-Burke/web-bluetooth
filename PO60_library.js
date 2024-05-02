@@ -11,6 +11,7 @@ const nextPacket = new Uint8Array([0x99, 0x01, 0x1A]).buffer;
 const deleteRecordCMD = new Uint8Array([0x99, 0x7F, 0x18]).buffer;
 const doorbell = new Uint8Array([0x99, 0x00, 0x19]).buffer;
 let getStorageCMD = new Uint8Array([0x90, 0x05, 0x15]);
+const resetCMD = new Uint8Array([0xFF]).buffer;
 
 
 
@@ -77,6 +78,13 @@ class PO {
       await characteristic.writeValue(data);
     }
   
+    async resetDevice(data) {
+      debugPrint('Resetting device.');
+      const service = await this.device.gatt.getPrimaryService("0000ff12-0000-1000-8000-00805f9b34fb");
+      const characteristic = await service.getCharacteristic(0xFFF1);
+      await characteristic.writeValue(data);
+    }
+
     async startCustomServiceNotifications(listener) {
       console.log('Starting notifications for 0xFF02.');
       const service = await this.device.gatt.getPrimaryService("0000ff12-0000-1000-8000-00805f9b34fb");

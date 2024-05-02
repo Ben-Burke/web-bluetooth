@@ -2,6 +2,7 @@
 <button id="checksum">Checksum</button>
 <button id="storage">Device Storage</button>
 <button id="purge">Purge PO60 messages</button>
+<button id="reset">Reset PO60</button>
 
 
 <div>
@@ -51,6 +52,16 @@ document.querySelector('#checksum').addEventListener('click', async event => {
   });
 
 
+  document.querySelector('#reset').addEventListener('click', async event => {
+    console.log('in Reset click event...');
+    console.log('I am here resetting the PO60...');
+    await pO.request();
+    await pO.connect();
+    debugPrint('Connected to Device.');
+    debugPrint('Resetting PO60...');
+    await pO.writeCustomService(resetCMD);
+    await pO.disconnect();
+  });
   
 
 
