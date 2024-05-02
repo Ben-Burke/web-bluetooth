@@ -4,31 +4,6 @@
 <button id="purge">Purge PO60 messages</button>
 
 
-<div>
-  <label for="minSpo02">Minimum Spo02:</label>
-  <input type="text" id="minSpo02" />
-</div>
-<div>
-  <label for="maxSpo02">Maximum Spo02:</label>
-  <input type="text" id="maxSpo02" />
-</div>
-<div>
-  <label for="avgSpo02">Average Spo02:</label>
-  <input type="text" id="avgSpo02" />
-</div>
-<div>
-  <label for="minPulseRate">Minimum Pulse Rate:</label>
-  <input type="text" id="minPulseRate" />
-</div>
-<div>
-  <label for="maxPulseRate">Maximum Pulse Rate:</label>
-  <input type="text" id="maxPulseRate" />
-</div>
-<div>
-  <label for="avgPulseRate">Average Pulse Rate:</label>
-  <input type="text" id="avgPulseRate" />
-</div>
-
 
 
 <script src="./PO60_library.js"> </script>
@@ -67,20 +42,6 @@ document.querySelector('#checksum').addEventListener('click', async event => {
     await pO.writeCustomService(getStorageCMD);
   });
 
-  // function purgePO60Messages() {
-  //   console.log('in Purge click event...');
-  //   console.log('I am here purging the PO60 messages...');
-  //   debugPrint('Purging PO60 messages...');
-  //   debugPrint('Purging PO60 messages...' + countOfStaleResults);
-  //   for ( let i = 1; i < countOfStaleResults; i++) {
-  //     await pO.writeCustomService(deleteRecordCMD);
-  //   }
-  //   console.log('End of Steps. Stopping Notifications...');
-  //   await pO.stopCustomServiceNotifications(pO.listener);
-  //   console.log('Notifications Stopped. Disconnecting...');
-  //   await pO.disconnect();
-  // }
-
   document.querySelector('#purge').addEventListener('click', async event => {
     console.log('in Purge click event...');
     // let packet = new Uint8Array([0x99, 0x00, 0x19]);
@@ -98,22 +59,14 @@ document.querySelector('#checksum').addEventListener('click', async event => {
     for ( let i = 1; i < countOfStaleResults; i++) {
       await pO.writeCustomService(deleteRecordCMD);
     }
-    // console.log('End of Steps. Stopping Notifications...');
-    //   await pO.stopCustomServiceNotifications(pO.listener);
-    //   console.log('Notifications Stopped. Disconnecting...');
-    //   await pO.disconnect();
+    console.log('End of Steps. Stopping Notifications...');
+      await pO.stopCustomServiceNotifications(pO.listener);
+      console.log('Notifications Stopped. Disconnecting...');
+      await pO.disconnect();
   });
 
   document.querySelector('#Everything').addEventListener('click', async event => {
     try {
-      // clear all the text boxes
-      document.getElementById('minSpo02').value = '';
-      document.getElementById('maxSpo02').value = '';
-      document.getElementById('avgSpo02').value = '';
-      document.getElementById('minPulseRate').value = '';
-      document.getElementById('maxPulseRate').value = '';
-      document.getElementById('avgPulseRate').value = '';
-      
       await pO.request();
       await pO.connect();
       debugPrint('Connected to Device. Starting notifications for 0xFF02.');
@@ -121,10 +74,10 @@ document.querySelector('#checksum').addEventListener('click', async event => {
       debugPrint('Pressing Doorbell...');
       await pO.writeCustomService(doorbell);
       debugPrint('Doorbell Pressed. Waiting for data...');
-      // await pO.readCustomService();
-      // debugPrint('Custom Service read.. Deleting the first record...');
-      // await pO.writeCustomService(deleteRecordCMD);
-      // debugPrint('Data read. Sending command for next packet');
+      await pO.readCustomService();
+      debugPrint('Custom Service read.. Deleting the first record...');
+      await pO.writeCustomService(deleteRecordCMD);
+      debugPrint('Data read. Sending command for next packet');
       await pO.writeCustomService(deleteRecordCMD);
       debugPrint('Record deleted. Sending Next packet...');
 
@@ -132,33 +85,10 @@ document.querySelector('#checksum').addEventListener('click', async event => {
       debugPrint('Next packet sent. Deleting the record...');
       await pO.writeCustomService(deleteRecordCMD);
 
-      // This is the only change for 2-May so far - call the Get Storage again, Before the purge
-
-      debugPrint('Reqesting Storage...After retrieving the data...');
-      await pO.writeCustomService(getStorageCMD);
-
-
-      debugPrint('Calling purge...');
-
-      for ( let i = 1; i < countOfStaleResults; i++) {
-        await pO.writeCustomService(deleteRecordCMD);
-        debugPrint('Record ' + i + ' deleted.');
-      }
-
       console.log('End of Steps. Stopping Notifications...');
       await pO.stopCustomServiceNotifications(pO.listener);
       console.log('Notifications Stopped. Disconnecting...');
       await pO.disconnect();
-
-      // populate the text boxes minSpo02, maxSpo02, avgSpo02, minPulseRate, maxPulseRate, avgPulseRate
-      document.getElementById('minSpo02').value = minSpo02;
-      document.getElementById('maxSpo02').value = maxSpo02;
-      document.getElementById('avgSpo02').value = avgSpo02;
-      document.getElementById('minPulseRate').value = minPulseRate;
-      document.getElementById('maxPulseRate').value = maxPulseRate;
-      document.getElementById('avgPulseRate').value = avgPulseRate;
-      
-
 
       /* Do something with pO... */
     } catch(error) {
