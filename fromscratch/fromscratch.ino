@@ -76,7 +76,11 @@ void setup() {
     delay(1000);
 
     LOG_INFO("Starting setup");
-    Serial.println("Good morning, Dave");
+    LOG_INFO("Initialising Display");
+    if (!initDisplay()) {
+        LOG_ERROR("Display failed to initialise");
+        for (;;); // Don't proceed, loop forever
+    }
 
 }
 
@@ -92,15 +96,16 @@ void loop() {
 
 
 // Function to initialize the display
-void initDisplay() {
+bool initDisplay() {
     if (!display.begin(SDD1327_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-        Serial.println(F("SSD1327 allocation failed"));
-        for (;;); // Don't proceed, loop forever
+        LOG_ERROR("SSD1327 allocation failed - startup failed");
+        return false;
     }
 
     // Clear display buffer and set the background color to black
     display.clearDisplay();
     display.fillScreen(SSD1327_BLACK);
+    return true;
 }
 
 // Function to draw the UI elements
