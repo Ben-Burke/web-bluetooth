@@ -72,8 +72,8 @@ Adafruit_SSD1327 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 
 void setup() {
-    Serial.begin(15200);
-    delay(5000);
+    Serial.begin(115200);
+    delay(1000);
 
     LOG_INFO("Starting setup");
     Serial.println("Good morning, Dave");
@@ -82,9 +82,10 @@ void setup() {
 
 // Example usage
 void loop() {
-  Serial.println('Do I know you?');
+//   Serial.println('Do I know you?');
   int sensorValue = analogRead(A0);
   logMessage(LOG_LEVEL_INFO, "Sensor reading: %d", sensorValue);
+  delay(10000);
   // ...
 }
 
