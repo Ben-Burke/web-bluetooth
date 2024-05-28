@@ -13,7 +13,14 @@
 //  Local Includes
 #define CURRENT_LOG_LEVEL LOG_LEVEL_DEBUG 
 #include "DebugLogger.h"
+#include "ScreenCode.h"
 
+
+#define I2C1_SCL_PIN        5
+#define I2C1_SDA_PIN        4
+
+#define I2C2_SCL_PIN        38                
+#define I2C2_SDA_PIN        21  
 
 // Define states (you'll need to replace these with meaningful values)
 enum State {
@@ -58,22 +65,17 @@ TwoWire I2C2 = TwoWire(1);
 
 
 
-// Declaration for an SSD1327 display connected to I2C (SDA, SCL pins)
-#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C // I2C display address for this specific display, check datasheet
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 128 // OLED display height, in pixels
-
-
-// it looks like SSD1327_SWITCHCAPVCC is no longer defined in the header file
-//  assign  it here
-#define  SDD1327_SWITCHCAPVCC 0x3C
-Adafruit_SSD1327 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
-
 void setup() {
     Serial.begin(115200);
     delay(1000);
+
+    LOG_INFO("Starting I2C");
+    Wire.begin(I2C1_SDA_PIN, I2C1_SCL_PIN, 400000);
+    Wire.setTimeout(100);
+
+    I2C2.begin(I2C2_SDA_PIN,I2C2_SCL_PIN, 100000);
+    I2C2.setTimeout(100); 
+
 
     LOG_INFO("Starting setup");
     LOG_INFO("Initialising Display");
@@ -81,6 +83,7 @@ void setup() {
         LOG_ERROR("Display failed to initialise");
         for (;;); // Don't proceed, loop forever
     }
+
 
 }
 
