@@ -11,16 +11,12 @@
 #include "string.h"
 
 //  Local Includes
+#include "HardwareParameters.h"
 #define CURRENT_LOG_LEVEL LOG_LEVEL_DEBUG 
 #include "DebugLogger.h"
 #include "ScreenCode.h"
 
 
-#define I2C1_SCL_PIN        5
-#define I2C1_SDA_PIN        4
-
-#define I2C2_SCL_PIN        38                
-#define I2C2_SDA_PIN        21  
 
 // Define states (you'll need to replace these with meaningful values)
 enum State {
@@ -39,6 +35,23 @@ enum State {
     MEASURE_3 = 12,
     COMPLETE = 13
 };
+
+#define BIO_MFIO_PIN        18
+#define BIO_RESET_PIN       17
+#define BUTTON_PIN          6
+#define BUTTON_PIN_BITMASK  0x40
+#define CAP_ADDR            0x48
+#define ENABLE_12V_PIN      12
+#define EEPROM_ADDR         0x50
+#define GREEN_LED_PIN       2
+#define I2C1_SCL_PIN        5
+#define I2C1_SDA_PIN        4
+#define I2C2_SCL_PIN        38
+#define I2C2_SDA_PIN        21
+#define OLED_ADDR           0x3C
+#define OLED_RESET_PIN      9
+#define PRESS_ADDR          0x5D
+#define RED_LED_PIN         1
 
 // Function prototypes (placeholders for now)
 bool checkVoltage(); 
@@ -76,6 +89,23 @@ void setup() {
     I2C2.begin(I2C2_SDA_PIN,I2C2_SCL_PIN, 100000);
     I2C2.setTimeout(100); 
 
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+  pinMode(GREEN_LED_PIN, OUTPUT);
+  pinMode(RED_LED_PIN, OUTPUT);
+  pinMode(ENABLE_12V_PIN, OUTPUT);
+  pinMode(10, OUTPUT);
+  digitalWrite(10, 1);
+  digitalWrite(GREEN_LED_PIN, 0);
+  digitalWrite(RED_LED_PIN, 0);
+  digitalWrite(ENABLE_12V_PIN, 0); 
+
+    pinMode(OLED_RESET_PIN, OUTPUT);
+    digitalWrite(OLED_RESET_PIN, LOW); // Reset display
+    delay(10);
+    digitalWrite(OLED_RESET_PIN, HIGH);
+    delay(100); // Allow display to stabilize
+
 
     LOG_INFO("Starting setup");
     LOG_INFO("Initialising Display");
@@ -92,6 +122,8 @@ void loop() {
 //   Serial.println('Do I know you?');
   int sensorValue = analogRead(A0);
   logMessage(LOG_LEVEL_INFO, "Sensor reading: %d", sensorValue);
+  drawUI();
+  LOG_INFO("Displaying UI");
   delay(10000);
   // ...
 }
@@ -100,7 +132,7 @@ void loop() {
 
 // Function to initialize the display
 bool initDisplay() {
-    if (!display.begin(SDD1327_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    if (!display.begin(OLED_ADDR)) {
         LOG_ERROR("SSD1327 allocation failed - startup failed");
         return false;
     }
