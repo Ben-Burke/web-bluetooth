@@ -267,7 +267,7 @@ void loop() {
               display.print("Connect");
               display.setCursor(0,65);
               display.print("Contra band");
-              drawUI();
+              // drawUI();
               display.display();
               dispUpdate = micros();
           }
@@ -296,10 +296,10 @@ void displayInit(){
   display.setTextSize(2);
   display.setTextColor(0xF);
   display.setCursor(16, 50);
-  display.print("Annoying");
+  display.print("Carriageworx");
   display.setCursor(45, 70);
   display.print("...");
-  drawUI();
+  // drawUI();
   display.display();
   dispUpdate = micros();  
   
@@ -307,102 +307,3 @@ void displayInit(){
   //display.display();
 }
 
-void drawUI(){
-  if(connection){
-    display.drawBitmap(0, 0, ble_bitmap, 8, 16, 0xF);
-  } else {
-    display.drawBitmap(0, 0, ble_bitmap, 8, 16, 0x6);
-  }
-  
-  display.drawBitmap(70, 0, u_bitmap, 16, 16, 0xF);
-
-  display.setTextSize(1);
-  display.setTextColor(0xF);
-  display.setCursor(20, 4);
-  display.print("EXAMIN");
-
-  itoa(charge, BLEbuf, 10);
-  
-  uint8_t charge_voltage = (voltage - SHUTDOWN_VOLTAGE)/11;
-
-  if(charge_voltage > 100){
-    charge_voltage = 100;
-  }
-
-  
-
-  if(charge_voltage == 100){
-    display.setCursor(100, 4);  
-  }else if(charge_voltage >= 10){
-    display.setCursor(105, 4);
-  }else{
-    display.setCursor(112, 4);
-  }
-  ////display.setCursor(90, 4); //////////
-  itoa(charge_voltage, BLEbuf, 10);
-  display.print(BLEbuf);
-  display.setCursor(120, 4);
-  display.print("%");
-
-  display.setCursor(0, 20);
-  display.print("Pres:");
-  if(pressure - init_pressure < 9999){
-    
-    itoa(pressure - init_pressure, BLEbuf, 10);
-  } else {
-    itoa(0, BLEbuf, 10);
-  }
-  display.print(BLEbuf);  
-  display.print("Pa");
-
-  display.setCursor(66, 31);
-  display.print("Virus:");
-  double capVal1 = (((double)(cap))/8388608)*4.096;
-  itoa(capVal1, BLEbuf, 10);
-  display.print(BLEbuf);
-  display.print(".");  
-  double capVal2 = (int)(capVal1*100) - (int)(capVal1)*100;
-  itoa(capVal2, BLEbuf, 10);
-  display.print(BLEbuf);
-
-  display.setTextSize(0.25);
-  display.setCursor(0, 120);
-  
-  double valFinal_1 = (((double)(capFinal_1))/8388608)*4096;
-  double valFinal_2 = (((double)(capFinal_2))/8388608)*4096;
-  double valFinal_3 = (((double)(capFinal_3))/8388608)*4096;
-
-  display.setTextColor(0x6);
-  itoa(valFinal_1, BLEbuf, 10);
-  display.print("1:");
-  display.print(BLEbuf);
-
-  itoa(valFinal_2, BLEbuf, 10);
-  display.print(" 2:");
-  display.print(BLEbuf);
-
-  itoa(valFinal_3, BLEbuf, 10);
-  display.print(" 3:");
-  display.print(BLEbuf);
-
-  if(date[0] != 0){
-    display.setCursor(0, 110);
-    itoa(date[2], BLEbuf, 10);
-    display.print(BLEbuf);
-    display.print("/");
-    itoa(date[0], BLEbuf, 10);
-    display.print(BLEbuf);
-    display.print("/");
-    itoa(date[1], BLEbuf, 10);
-    display.print(BLEbuf);
-    display.print(" ID:");
-    display.print(id);
-  }
-
-  display.drawLine(0, 18, 128, 18, 0xF);
-  display.drawLine(0, 29, 128, 29, 0xF);
-  display.drawLine(0, 40, 128, 40, 0xF);
-}
-
-
-  
