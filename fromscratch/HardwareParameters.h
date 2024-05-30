@@ -1,0 +1,16 @@
+#define BIO_MFIO_PIN        18
+#define BIO_RESET_PIN       17
+#define BUTTON_PIN          6
+#define BUTTON_PIN_BITMASK  0x40
+#define CAP_ADDR            0x48
+#define ENABLE_12V_PIN      12
+#define EEPROM_ADDR         0x50
+#define GREEN_LED_PIN       2
+#define I2C1_SCL_PIN        5
+#define I2C1_SDA_PIN        4
+#define I2C2_SCL_PIN        38
+#define I2C2_SDA_PIN        21
+#define OLED_ADDR           0x3C
+#define OLED_RESET_PIN      9
+#define PRESS_ADDR          0x5D
+#define RED_LED_PIN         1

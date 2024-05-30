@@ -36,22 +36,6 @@ enum State {
     COMPLETE = 13
 };
 
-#define BIO_MFIO_PIN        18
-#define BIO_RESET_PIN       17
-#define BUTTON_PIN          6
-#define BUTTON_PIN_BITMASK  0x40
-#define CAP_ADDR            0x48
-#define ENABLE_12V_PIN      12
-#define EEPROM_ADDR         0x50
-#define GREEN_LED_PIN       2
-#define I2C1_SCL_PIN        5
-#define I2C1_SDA_PIN        4
-#define I2C2_SCL_PIN        38
-#define I2C2_SDA_PIN        21
-#define OLED_ADDR           0x3C
-#define OLED_RESET_PIN      9
-#define PRESS_ADDR          0x5D
-#define RED_LED_PIN         1
 
 // Function prototypes (placeholders for now)
 bool checkVoltage(); 
@@ -106,7 +90,9 @@ void setup() {
     digitalWrite(OLED_RESET_PIN, HIGH);
     delay(100); // Allow display to stabilize
 
-
+  // Initialize I2C2 after I2C1 and display reset
+    I2C2.begin(I2C2_SDA_PIN,I2C2_SCL_PIN, 100000);
+    I2C2.setTimeout(100);
     LOG_INFO("Starting setup");
     LOG_INFO("Initialising Display");
     if (!initDisplay()) {
@@ -123,7 +109,6 @@ void loop() {
   int sensorValue = analogRead(A0);
   logMessage(LOG_LEVEL_INFO, "Sensor reading: %d", sensorValue);
   drawUI();
-  LOG_INFO("Displaying UI");
   delay(10000);
   // ...
 }
@@ -137,37 +122,66 @@ bool initDisplay() {
         return false;
     }
 
-    // Clear display buffer and set the background color to black
-    display.clearDisplay();
-    display.fillScreen(SSD1327_BLACK);
+              display.clearDisplay();
+              display.setTextColor(0xF); 
+              display.setTextSize(2);
+              display.setCursor(20, 50);
+              display.print("Connect");
+              display.setCursor(0,65);
+              display.print("Headband");
+              drawUI();
+              display.display();
     return true;
 }
 
 // Function to draw the UI elements
-void drawUI() {
-    // Set text color
-    display.setTextColor(SSD1327_WHITE);
-    display.setCursor(5, 15);
-    display.setTextSize(1);
-    display.print("Batt: ");
-    display.print(batteryVoltage/1000.0);
-    display.print("V");
-    // Display battery voltage
+// void drawUI() {
+//     // Set text color
+//     LOG_INFO("Drawing UI to me");
+//     display.setTextColor(0xF);
+//     display.setCursor(5, 15);
+//     display.setTextSize(1);
+//     display.print("Batt: ");
+//     display.print(batteryVoltage/1000.0);
+//     display.print("V");
+//     // Display battery voltage
 
-    display.setCursor(75, 15);
-    // Display current time
-    display.print(date[0]);
-    display.print("-");
-    display.print(date[1]);
-    display.print("-");
-    display.print(date[2]);
+//     display.setCursor(75, 15);
+//     // Display current time
+//     display.print(date[0]);
+//     display.print("-");
+//     display.print(date[1]);
+//     display.print("-");
+//     display.print(date[2]);
 
-    display.setCursor(0, 120);
-    display.print("ID:");
+//     display.setCursor(0, 120);
+//     display.print("ID:");
 
-    for(int i = 0; i < 9; i++){
-        display.print(id[i]);
-    }
+//     for(int i = 0; i < 9; i++){
+//         display.print(id[i]);
+//     }
 
-    display.drawRoundRect(5, 25, 117, 90, 10, SSD1327_WHITE);
+//     display.drawRoundRect(5, 25, 117, 90, 10, SSD1327_WHITE);
+// }
+void drawUI(){
+//   if(connection){
+//     display.drawBitmap(0, 0, ble_bitmap, 8, 16, 0xF);
+//   } else {
+//     display.drawBitmap(0, 0, ble_bitmap, 8, 16, 0x6);
+//   }
+  
+  display.drawBitmap(70, 0, u_bitmap, 16, 16, 0xF);
+
+  display.setTextSize(1);
+  display.setTextColor(0xF);
+  display.setCursor(20, 4);
+  display.print("EXAMIN");
+
+  
+  
+  display.drawLine(0, 18, 128, 18, 0xF);
+  display.drawLine(0, 29, 128, 29, 0xF);
+  display.drawLine(0, 40, 128, 40, 0xF);
 }
+
+
