@@ -209,35 +209,13 @@ void loop() {
 
     
     
-    if((state != IDLE)|(state != MOUTHPIECE_MISSING)|(state != SHUTDOWN)){
-      // pressureInit();
-      // sensorsRead();
-      // dataLog();
-      // // bleUpdate();
-    }else{
-      temp = 0;
-      cap = 0; 
-      pressure = 0;
-    }
-
+   
     
 
     
 
 
     switch(state){
-      case SHUTDOWN:
-        digitalWrite(ENABLE_12V_PIN, 0);
-        digitalWrite(GREEN_LED_PIN, 0);
-        digitalWrite(RED_LED_PIN, 0);
-
-        delay(500);
-
-        rtc_gpio_pullup_en(GPIO_NUM_6);
-        rtc_gpio_pulldown_dis(GPIO_NUM_6);
-        esp_sleep_enable_ext0_wakeup((gpio_num_t)GPIO_NUM_6, 0);
-        esp_deep_sleep_start();
-        break;
 
       case IDLE:
         if(voltage < SHUTDOWN_VOLTAGE){
@@ -257,26 +235,7 @@ void loop() {
 
 
       //If the mouthpiece is disconnected wait until it is connected again
-      case MOUTHPIECE_MISSING:
-
-          if(dispUpdate + refreshRate < micros() ){
-              display.clearDisplay();
-              display.setTextColor(0xF); 
-              display.setTextSize(2);
-              display.setCursor(20, 50);
-              display.print("Connect");
-              display.setCursor(0,65);
-              display.print("Contra band");
-              // drawUI();
-              display.display();
-              dispUpdate = micros();
-          }
-
       
-      
-        
-        
-        break;
       
     }
  
@@ -296,7 +255,7 @@ void displayInit(){
   display.setTextSize(2);
   display.setTextColor(0xF);
   display.setCursor(16, 50);
-  display.print("Carriageworx");
+  display.print("FrogsEyes");
   display.setCursor(45, 70);
   display.print("...");
   // drawUI();
