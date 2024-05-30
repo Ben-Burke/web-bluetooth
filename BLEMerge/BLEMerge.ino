@@ -736,7 +736,7 @@ void loop() {
               display.setCursor(20, 50);
               display.print("Connect");
               display.setCursor(0,65);
-              display.print("Fat band");
+              display.print("Hat band");
               drawUI();
               display.display();
               dispUpdate = micros();
