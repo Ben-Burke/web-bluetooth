@@ -10,6 +10,25 @@
 #include "driver/rtc_io.h"
 #include "string.h"
 
+//**************************** System Settings **********************************
+
+#define OLED_ADDR             0x3C
+#define OLED_RESET_PIN      9
+#define ENABLE_12V_PIN      12 
+
+
+#define BUTTON_PIN          6
+#define BUTTON_PIN_BITMASK  0x40
+
+#define I2C1_SCL_PIN        5
+#define I2C1_SDA_PIN        4
+
+#define I2C2_SCL_PIN        38                
+#define I2C2_SDA_PIN        21  
+
+#define GREEN_LED_PIN       2
+#define RED_LED_PIN         1
+
 
 
 
@@ -83,7 +102,7 @@ void displayInit(){
   display.setTextSize(2);
   display.setTextColor(0xF);
   display.setCursor(16, 50);
-  display.print("DogsEars");
+  display.print("DogsBalls");
   display.setCursor(45, 70);
   display.print("...");
   // drawUI();
