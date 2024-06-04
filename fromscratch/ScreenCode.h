@@ -41,3 +41,48 @@ static const unsigned char PROGMEM u_bitmap[] = {
   0b00000111, 0b11100000,
   0b00000000, 0b00000000,
   };  
+
+void drawUI(){
+
+  display.drawBitmap(70, 0, u_bitmap, 16, 16, 0xF);
+  display.drawBitmap(0, 0, bluetooth_bitmap, 8, 16, 0x6);
+
+  display.setTextSize(1);
+  display.setTextColor(0xF);
+  display.setCursor(20, 4);
+  display.print("EXAMIN");
+
+  
+  
+  display.drawLine(0, 18, 128, 18, 0xF);
+  display.drawLine(0, 29, 128, 29, 0xF);
+  display.drawLine(0, 40, 128, 40, 0xF);
+}
+
+
+
+  void displayBaseMessage(const char* line1, const char* line2) {
+      display.clearDisplay();
+      display.setTextColor(0xF); 
+      display.setTextSize(2);
+      display.setCursor(20, 50);
+      display.print(line1);
+      display.setCursor(0, 65);
+      display.print(line2);
+      drawUI();
+      display.display();
+}
+
+// / Function to initialize the display
+bool initDisplay() {
+    if (!display.begin(OLED_ADDR)) {
+        LOG_ERROR("SSD1327 allocation failed - startup failed");
+        return false;
+    }
+    // call displayBaseMessage with the following parameters
+    // Breathalyzer
+    // Starting...
+    displayBaseMessage("Breathalyzer", "Starting...");
+
+    return true;
+}
