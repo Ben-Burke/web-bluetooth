@@ -78,6 +78,11 @@ void enterDeepSleep() {
     // TODO: Implement this function
 }
 
+bool waitForBreath() {
+  // TODO: Implement this function
+  displayBaseMessage("waiting for", "breath");
+  for (;;); // Don't proceed, loop forever
+}
 
 
 TwoWire I2C2 = TwoWire(1);
@@ -166,6 +171,10 @@ void loop() {
             break;
         case INITIALISE:
             // Initialization logic
+            displayBaseMessage("Initialising", ".");
+            delay(1000);
+            displayBaseMessage("Initialising", "..");
+            delay(1000);
             displayBaseMessage("Initialising", "...");
             // ... 
             // Transitions to WAIT_FOR_BREATH, MOUTHPIECE_MISSING, or SHUTDOWN
@@ -177,6 +186,10 @@ void loop() {
                 // Perform other initialization tasks
                 // ...
                 currentState = WAIT_FOR_BREATH; // Transition to waiting for breath
+            }
+        case WAIT_FOR_BREATH:
+            if (waitForBreath()) {
+                currentState = BREATH;
             }
             break;
         // ... (add cases for other states)
