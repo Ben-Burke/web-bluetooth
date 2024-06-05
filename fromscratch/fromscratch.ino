@@ -14,6 +14,15 @@
 #include "HardwareParameters.h"
 #include "DebugLogger.h"
 #include "ScreenCode.h"
+TwoWire I2C2 = TwoWire(1);
+#define BUTTON_PIN          6
+#define BUTTON_PIN_BITMASK  0x40
+// ToDo This needs fixing
+#define verbose   1
+
+#include "Pressure.h"
+#include "Capacitance.h"
+
 
 #define CURRENT_LOG_LEVEL LOG_LEVEL_DEBUG 
 
@@ -102,14 +111,12 @@ void enterDeepSleep() {
 
 bool waitForBreath() {
   // TODO: Implement this function
-  displayBaseMessage("waiting for", "breath");
+  // displayBaseMessage("waiting for", "breath");
+  acquireBreath();
   for (;;); // Don't proceed, loop forever
 }
 
 
-TwoWire I2C2 = TwoWire(1);
-#define BUTTON_PIN          6
-#define BUTTON_PIN_BITMASK  0x40
 
 
 int debounce = 0;
@@ -125,6 +132,17 @@ unsigned long cap;
 uint16_t voltage = 9999;
 #define SHUTDOWN_VOLTAGE      3000 //The battery voltage when the system will shutdown in mV
 
+
+void sensorsRead(){
+   
+  cap = capRead(); 
+  
+  pressureInit();
+  
+  pressure = pressureRead();
+
+  
+}
 
 void acquireBreath() {
     
@@ -262,56 +280,69 @@ void loop() {
       delay(3000);
     
     switch (currentState) {
-        case IDLE:
-            if (checkVoltage()) {
-                currentState = INITIALISE;
-            } else {
-                currentState = LOW_VOLTAGE;
-            }
-            break;
-        case LOW_VOLTAGE:
-            // Handle low voltage (e.g., display warning, retry)
-            if (checkVoltage()) {
-                currentState = IDLE;
-            } else {
-                // Timeout logic for shutdown
-                currentState = SHUTDOWN;
-            }
-            break;
-        case SHUTDOWN:
-            turnOffComponents();
-            enterDeepSleep(); 
-            break;
-        case INITIALISE:
-            // Initialization logic
-            displayBaseMessage("Initialising", ".");
-            delay(1000);
-            displayBaseMessage("Initialising", "..");
-            delay(1000);
-            displayBaseMessage("Initialising", "...");
-            // ... 
-            // Transitions to WAIT_FOR_BREATH, MOUTHPIECE_MISSING, or SHUTDOWN
-            if (!digitalRead(BUTTON_PIN)) { // Check for button press
-            currentState = SHUTDOWN;
-            } else if (!detectMouthpiece()) { // Check for mouthpiece
-                currentState = MOUTHPIECE_MISSING;
-                displayBaseMessage("Mouthpiece", "Missing");
-                delay(2000);
-            } else {
-                // Perform other initialization tasks
-                // ...
-                currentState = WAIT_FOR_BREATH; // Transition to waiting for breath
-            }
-        case WAIT_FOR_BREATH:
-            if (waitForBreath()) {
-                currentState = BREATH;
-            }
-            break;
+      case IDLE:
+        if (checkVoltage()) {
+          currentState = INITIALISE;
+          LOG_INFO("Transition: IDLE -> INITIALISE");
+        } else {
+          currentState = LOW_VOLTAGE;
+          LOG_INFO("Transition: IDLE -> LOW_VOLTAGE");
+        }
+        break;
+      case LOW_VOLTAGE:
+        // Handle low voltage (e.g., display warning, retry)
+        if (checkVoltage()) {
+          currentState = IDLE;
+          LOG_INFO("Transition: LOW_VOLTAGE -> IDLE");
+        } else {
+          // Timeout logic for shutdown
+          currentState = SHUTDOWN;
+          LOG_INFO("Transition: LOW_VOLTAGE -> SHUTDOWN");
+        }
+        break;
+      case SHUTDOWN:
+        turnOffComponents();
+        enterDeepSleep();
+        LOG_INFO("Transition: SHUTDOWN");
+        break;
+      case INITIALISE:
+        // Initialization logic
+        displayBaseMessage("Initialising", ".");
+        delay(1000);
+        sensorsRead();
+        displayBaseMessage("Initialising", "..");
+        delay(1000);
+        displayBaseMessage("Initialising", "...");
+        // ... 
+        // Transitions to WAIT_FOR_BREATH, MOUTHPIECE_MISSING, or SHUTDOWN
+        if (!digitalRead(BUTTON_PIN)) { // Check for button press
+          currentState = SHUTDOWN;
+          LOG_INFO("Transition: INITIALISE -> SHUTDOWN");
+        } else if (!detectMouthpiece()) { // Check for mouthpiece
+          currentState = MOUTHPIECE_MISSING;
+          LOG_INFO("Transition: INITIALISE -> MOUTHPIECE_MISSING");
+          displayBaseMessage("Mouthpiece", "Missing");
+          delay(2000);
+        } else {
+          // Perform other initialization tasks
+          // ...
+          currentState = WAIT_FOR_BREATH; // Transition to waiting for breath
+          LOG_INFO("Transition: INITIALISE -> WAIT_FOR_BREATH");
+        }
+        break;
+      case WAIT_FOR_BREATH:
+        if (waitForBreath()) {
+          currentState = BREATH;
+          LOG_INFO("Transition: WAIT_FOR_BREATH -> BREATH");
+        }
+        break;
+      // ... (add cases for other states)
+    }
         // ... (add cases for other states)
     }
     // I want to test the display... can you call something like this to let me test
     // the display?
-}
+
 
 
 

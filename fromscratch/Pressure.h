@@ -1,3 +1,5 @@
+#include <cstddef>
+#define PRESS_ADDR          0x5D
 //******************************** Pressure Sensor ****************************
 void pressureInit(){
   Wire.beginTransmission(PRESS_ADDR);
