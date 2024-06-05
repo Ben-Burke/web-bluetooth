@@ -2,7 +2,6 @@
 #define BIO_RESET_PIN       17
 #define BUTTON_PIN          6
 #define BUTTON_PIN_BITMASK  0x40
-#define CAP_ADDR            0x48
 #define ENABLE_12V_PIN      12
 #define EEPROM_ADDR         0x50
 #define GREEN_LED_PIN       2

@@ -9,6 +9,15 @@
 #include <stdio.h> 
 #include "driver/rtc_io.h"
 #include "string.h"
+#include <cstddef> // for byte definitions
+#include <stdint.h> // for uint8_t definitions
+#include <stdlib.h> // for random number generation
+#include <stdarg.h> // for variable arguments
+#include <stdio.h> // for printf
+#include <string.h> // for string manipulation
+#include <time.h> // for time functions
+#include <math.h> // for math functions
+#include <Adafruit_GFX.h>
 
 //  Local Includes
 #include "HardwareParameters.h"
@@ -77,6 +86,18 @@ unsigned long dispUpdate = 0;
 unsigned long refreshRate = 1000000; // 1 second
 unsigned long lv_time = 0;
 unsigned long inactive_time = 0;
+int debounce = 0;
+double pressure;
+double max_pressure;
+double init_pressure = 1;
+static unsigned long breathStart = 0;
+int capReadings = 0;
+
+unsigned long capInitial = 0;
+static unsigned long endOfSpike = 0;
+unsigned long cap;
+uint16_t voltage = 9999;
+#define SHUTDOWN_VOLTAGE      3000 //The battery voltage when the system will shutdown in mV
 
 
 
@@ -88,14 +109,16 @@ bool checkVoltage() {
 bool detectMouthpiece() {
     // TODO: Implement this function
    
-
+  LOG_DEBUG("Checking for mouthpiece");
   Wire.beginTransmission(PRESS_ADDR);
   Wire.write(byte(0x0F));
   Wire.endTransmission();
   Wire.requestFrom(PRESS_ADDR,1);
   if(Wire.read() == 0xb3){
+    LOG_DEBUG("Mouthpiece detected");
     return 1;
   }else{
+    LOG_DEBUG("Mouthpiece not detected");
     return 0;
   }
     return true;
@@ -119,18 +142,6 @@ bool waitForBreath() {
 
 
 
-int debounce = 0;
-double pressure;
-double max_pressure;
-double init_pressure = 1;
-static unsigned long breathStart = 0;
-int capReadings = 0;
-
-unsigned long capInitial = 0;
-static unsigned long endOfSpike = 0;
-unsigned long cap;
-uint16_t voltage = 9999;
-#define SHUTDOWN_VOLTAGE      3000 //The battery voltage when the system will shutdown in mV
 
 
 void sensorsRead(){
