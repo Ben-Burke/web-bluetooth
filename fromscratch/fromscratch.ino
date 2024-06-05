@@ -12,11 +12,23 @@
 
 //  Local Includes
 #include "HardwareParameters.h"
-#define CURRENT_LOG_LEVEL LOG_LEVEL_DEBUG 
 #include "DebugLogger.h"
 #include "ScreenCode.h"
 
+#define CURRENT_LOG_LEVEL LOG_LEVEL_DEBUG 
 
+// Constants for breath measurement
+#define BREATH_LENGTH         5000000 //How long the breath timer should be
+#define BREATH_SAMPLES        5  //How many samples are taken for each measurement
+#define BREATH_PRESSURE       60 //Minimum pressure for the breath to be accepted
+#define BREATH_SENSITIVITY    100
+#define BREATH_END_THRESHOLD  4090 //What the capacitance has to drop to for the breath to be considered done (in pF)
+#define BREATH_DELAY_1        5000000 //Time until first measurement after breath (in microseconds)
+#define BREATH_DELAY_2        10000000    //Time after first measurement until second
+#define BREATH_DELAY_3        30000000
+// #define WAIT_AFTER_BREATH_1 4
+// #define WAIT_AFTER_BREATH_2 6  
+// #define WAIT_AFTER_BREATH_3 8
 
 // Define states (you'll need to replace these with meaningful values)
 enum State {
@@ -47,7 +59,6 @@ void enterDeepSleep();
 // ... (add other functions for measurements, UI updates, etc.)
 
 
-
 // Global variables for display
 // ToDo: see if any of these are really needed
 float batteryVoltage = 0.0;
@@ -67,6 +78,17 @@ bool checkVoltage() {
 
 bool detectMouthpiece() {
     // TODO: Implement this function
+   
+
+  Wire.beginTransmission(PRESS_ADDR);
+  Wire.write(byte(0x0F));
+  Wire.endTransmission();
+  Wire.requestFrom(PRESS_ADDR,1);
+  if(Wire.read() == 0xb3){
+    return 1;
+  }else{
+    return 0;
+  }
     return true;
 }
 
@@ -90,6 +112,97 @@ TwoWire I2C2 = TwoWire(1);
 #define BUTTON_PIN_BITMASK  0x40
 
 
+int debounce = 0;
+double pressure;
+double max_pressure;
+double init_pressure = 1;
+static unsigned long breathStart = 0;
+int capReadings = 0;
+
+unsigned long capInitial = 0;
+static unsigned long endOfSpike = 0;
+unsigned long cap;
+uint16_t voltage = 9999;
+#define SHUTDOWN_VOLTAGE      3000 //The battery voltage when the system will shutdown in mV
+
+
+void acquireBreath() {
+    
+
+    // Update Display with a countdown 
+    if (dispUpdate + refreshRate < micros()) {
+        display.clearDisplay();
+        display.setTextSize(2);
+        display.setTextColor(0xF);
+
+        if (breathStart + BREATH_LENGTH > micros()) {
+            display.setCursor(25, 50);
+            display.print("Breathe");
+            // ..(rest of the display update code from the BREATH case)
+            display.display();
+        } else if(max_pressure < BREATH_PRESSURE) {
+          // ... (rest of the display update code from the BREATH case)
+        }
+        else {
+            display.setCursor(25, 50);
+            display.print("Waiting");
+            display.setCursor(45, 70);
+            display.print("For");
+            display.setCursor(15, 90);
+            display.print("Breath...");
+            drawUI();
+            display.display();
+        }
+        
+        dispUpdate = micros();
+    }
+
+    double capVal = (((double)(cap)) / 8388608) * 4096;
+    double valInit = (((double)(capInitial)) / 8388608) * 4096;
+
+    if (capVal >= valInit + BREATH_SENSITIVITY) {
+        debounce += 1;
+    }
+    if (debounce >= 3) {
+        currentState = BREATH;
+        debounce = 0;
+        breathStart = micros();
+    }
+}
+
+void measure() {
+    if (voltage < SHUTDOWN_VOLTAGE) {
+        currentState = LOW_VOLTAGE;
+        lv_time = micros();
+        return; 
+    }
+
+    if (!digitalRead(BUTTON_PIN)) {
+        currentState = SHUTDOWN;
+        return; 
+    }
+
+    if (!detectMouthpiece()) {
+        currentState = MOUTHPIECE_MISSING;
+        inactive_time = micros();
+        return; 
+    }
+
+    if (pressure - init_pressure > max_pressure) {
+        max_pressure = pressure - init_pressure;
+    }
+   
+    double capVal = (((double)(cap)) / 8388608) * 4096;
+
+    if ((capVal <= BREATH_END_THRESHOLD) && (breathStart + BREATH_LENGTH < micros()) && (max_pressure >= BREATH_PRESSURE)) {
+        debounce += 1;
+    }
+    if (debounce >= 3) {
+        currentState = WAIT_AFTER_BREATH_1; 
+        endOfSpike = micros();
+        capReadings = 0;
+    }
+}
 
 
 
@@ -182,6 +295,8 @@ void loop() {
             currentState = SHUTDOWN;
             } else if (!detectMouthpiece()) { // Check for mouthpiece
                 currentState = MOUTHPIECE_MISSING;
+                displayBaseMessage("Mouthpiece", "Missing");
+                delay(2000);
             } else {
                 // Perform other initialization tasks
                 // ...
