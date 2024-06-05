@@ -1,33 +1,26 @@
 // A complete rewrite of the Examin Handset code, for board version 1.6
 
+// Standard includes
+#include "StandardIncludes.h"
+
 // The following libraries are definitely required
 #include <Arduino.h>
 #include <ArduinoBLE.h>
 #include <Wire.h>
 #include <Adafruit_SSD1327.h>
-// ToDo - check if these are required
-#include <stdio.h> 
-#include "driver/rtc_io.h"
-#include "string.h"
-#include <cstddef> // for byte definitions
-#include <stdint.h> // for uint8_t definitions
-#include <stdlib.h> // for random number generation
-#include <stdarg.h> // for variable arguments
-#include <stdio.h> // for printf
-#include <string.h> // for string manipulation
-#include <time.h> // for time functions
-#include <math.h> // for math functions
-#include <Adafruit_GFX.h>
+// ToDo - check if this is required
+// #include <Adafruit_GFX.h>
 
 //  Local Includes
 #include "HardwareParameters.h"
 #include "DebugLogger.h"
 #include "ScreenCode.h"
+
 TwoWire I2C2 = TwoWire(1);
 #define BUTTON_PIN          6
 #define BUTTON_PIN_BITMASK  0x40
 // ToDo This needs fixing
-#define verbose   1
+// #define verbose   1
 
 #include "Pressure.h"
 #include "Capacitance.h"
@@ -98,6 +91,129 @@ static unsigned long endOfSpike = 0;
 unsigned long cap;
 uint16_t voltage = 9999;
 #define SHUTDOWN_VOLTAGE      3000 //The battery voltage when the system will shutdown in mV
+
+
+
+
+
+void setup() {
+    Serial.begin(115200);
+    delay(1000);
+
+    LOG_INFO("Starting I2C Number 1");
+    Wire.begin(I2C1_SDA_PIN, I2C1_SCL_PIN, 400000);
+    Wire.setTimeout(100);
+
+    LOG_INFO("Starting I2C Number 2");
+    I2C2.begin(I2C2_SDA_PIN,I2C2_SCL_PIN, 100000);
+    I2C2.setTimeout(100); 
+
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+    pinMode(GREEN_LED_PIN, OUTPUT);
+    pinMode(RED_LED_PIN, OUTPUT);
+    pinMode(ENABLE_12V_PIN, OUTPUT);
+    pinMode(10, OUTPUT);
+    digitalWrite(10, 1);
+    digitalWrite(GREEN_LED_PIN, 0);
+    digitalWrite(RED_LED_PIN, 0);
+    digitalWrite(ENABLE_12V_PIN, 0); 
+
+    pinMode(OLED_RESET_PIN, OUTPUT);
+    digitalWrite(OLED_RESET_PIN, LOW); // Reset display
+    delay(10);
+    digitalWrite(OLED_RESET_PIN, HIGH);
+    delay(100); // Allow display to stabilize
+
+  
+  // Initialize I2C2 after I2C1 and display reset
+    // I2C2.begin(I2C2_SDA_PIN,I2C2_SCL_PIN, 100000);
+    // I2C2.setTimeout(100);
+    LOG_INFO("Starting setup");
+
+    // and the magic 12V pin
+    digitalWrite(ENABLE_12V_PIN, 1);
+
+    LOG_INFO("Initialising Display");
+    if (!initDisplay()) {
+        LOG_ERROR("Display failed to initialise");
+        for (;;); // Don't proceed, loop forever
+    }
+
+
+}
+
+
+
+void loop() {
+      int sensorValue = analogRead(A0);
+      logMessage(LOG_LEVEL_INFO, "Sensor reading: %d", sensorValue);
+      drawUI();
+      delay(3000);
+    
+    switch (currentState) {
+      case IDLE:
+        if (checkVoltage()) {
+          currentState = INITIALISE;
+          LOG_INFO("Transition: IDLE -> INITIALISE");
+        } else {
+          currentState = LOW_VOLTAGE;
+          LOG_INFO("Transition: IDLE -> LOW_VOLTAGE");
+        }
+        break;
+      case LOW_VOLTAGE:
+        // Handle low voltage (e.g., display warning, retry)
+        if (checkVoltage()) {
+          currentState = IDLE;
+          LOG_INFO("Transition: LOW_VOLTAGE -> IDLE");
+        } else {
+          // Timeout logic for shutdown
+          currentState = SHUTDOWN;
+          LOG_INFO("Transition: LOW_VOLTAGE -> SHUTDOWN");
+        }
+        break;
+      case SHUTDOWN:
+        turnOffComponents();
+        enterDeepSleep();
+        LOG_INFO("Transition: SHUTDOWN");
+        break;
+      case INITIALISE:
+        // Initialization logic
+        displayBaseMessage("Initialising", ".");
+        delay(1000);
+        sensorsRead();
+        displayBaseMessage("Initialising", "..");
+        delay(1000);
+        displayBaseMessage("Initialising", "...");
+        // ... 
+        // Transitions to WAIT_FOR_BREATH, MOUTHPIECE_MISSING, or SHUTDOWN
+        if (!digitalRead(BUTTON_PIN)) { // Check for button press
+          currentState = SHUTDOWN;
+          LOG_INFO("Transition: INITIALISE -> SHUTDOWN");
+        } else if (!detectMouthpiece()) { // Check for mouthpiece
+          currentState = MOUTHPIECE_MISSING;
+          LOG_INFO("Transition: INITIALISE -> MOUTHPIECE_MISSING");
+          displayBaseMessage("Mouthpiece", "Missing");
+          delay(2000);
+        } else {
+          // Perform other initialization tasks
+          // ...
+          currentState = WAIT_FOR_BREATH; // Transition to waiting for breath
+          LOG_INFO("Transition: INITIALISE -> WAIT_FOR_BREATH");
+        }
+        break;
+      case WAIT_FOR_BREATH:
+        if (waitForBreath()) {
+          currentState = BREATH;
+          LOG_INFO("Transition: WAIT_FOR_BREATH -> BREATH");
+        }
+        break;
+      // ... (add cases for other states)
+    }
+        // ... (add cases for other states)
+    }
+    // I want to test the display... can you call something like this to let me test
+    // the display?
 
 
 
@@ -232,129 +348,6 @@ void measure() {
         capReadings = 0;
     }
 }
-
-
-
-void setup() {
-    Serial.begin(115200);
-    delay(1000);
-
-    LOG_INFO("Starting I2C Number 1");
-    Wire.begin(I2C1_SDA_PIN, I2C1_SCL_PIN, 400000);
-    Wire.setTimeout(100);
-
-    LOG_INFO("Starting I2C Number 2");
-    I2C2.begin(I2C2_SDA_PIN,I2C2_SCL_PIN, 100000);
-    I2C2.setTimeout(100); 
-
-    pinMode(BUTTON_PIN, INPUT_PULLUP);
-
-    pinMode(GREEN_LED_PIN, OUTPUT);
-    pinMode(RED_LED_PIN, OUTPUT);
-    pinMode(ENABLE_12V_PIN, OUTPUT);
-    pinMode(10, OUTPUT);
-    digitalWrite(10, 1);
-    digitalWrite(GREEN_LED_PIN, 0);
-    digitalWrite(RED_LED_PIN, 0);
-    digitalWrite(ENABLE_12V_PIN, 0); 
-
-    pinMode(OLED_RESET_PIN, OUTPUT);
-    digitalWrite(OLED_RESET_PIN, LOW); // Reset display
-    delay(10);
-    digitalWrite(OLED_RESET_PIN, HIGH);
-    delay(100); // Allow display to stabilize
-
-  
-  // Initialize I2C2 after I2C1 and display reset
-    // I2C2.begin(I2C2_SDA_PIN,I2C2_SCL_PIN, 100000);
-    // I2C2.setTimeout(100);
-    LOG_INFO("Starting setup");
-
-    // and the magic 12V pin
-    digitalWrite(ENABLE_12V_PIN, 1);
-
-    LOG_INFO("Initialising Display");
-    if (!initDisplay()) {
-        LOG_ERROR("Display failed to initialise");
-        for (;;); // Don't proceed, loop forever
-    }
-
-
-}
-
-
-
-void loop() {
-      int sensorValue = analogRead(A0);
-      logMessage(LOG_LEVEL_INFO, "Sensor reading: %d", sensorValue);
-      drawUI();
-      delay(3000);
-    
-    switch (currentState) {
-      case IDLE:
-        if (checkVoltage()) {
-          currentState = INITIALISE;
-          LOG_INFO("Transition: IDLE -> INITIALISE");
-        } else {
-          currentState = LOW_VOLTAGE;
-          LOG_INFO("Transition: IDLE -> LOW_VOLTAGE");
-        }
-        break;
-      case LOW_VOLTAGE:
-        // Handle low voltage (e.g., display warning, retry)
-        if (checkVoltage()) {
-          currentState = IDLE;
-          LOG_INFO("Transition: LOW_VOLTAGE -> IDLE");
-        } else {
-          // Timeout logic for shutdown
-          currentState = SHUTDOWN;
-          LOG_INFO("Transition: LOW_VOLTAGE -> SHUTDOWN");
-        }
-        break;
-      case SHUTDOWN:
-        turnOffComponents();
-        enterDeepSleep();
-        LOG_INFO("Transition: SHUTDOWN");
-        break;
-      case INITIALISE:
-        // Initialization logic
-        displayBaseMessage("Initialising", ".");
-        delay(1000);
-        sensorsRead();
-        displayBaseMessage("Initialising", "..");
-        delay(1000);
-        displayBaseMessage("Initialising", "...");
-        // ... 
-        // Transitions to WAIT_FOR_BREATH, MOUTHPIECE_MISSING, or SHUTDOWN
-        if (!digitalRead(BUTTON_PIN)) { // Check for button press
-          currentState = SHUTDOWN;
-          LOG_INFO("Transition: INITIALISE -> SHUTDOWN");
-        } else if (!detectMouthpiece()) { // Check for mouthpiece
-          currentState = MOUTHPIECE_MISSING;
-          LOG_INFO("Transition: INITIALISE -> MOUTHPIECE_MISSING");
-          displayBaseMessage("Mouthpiece", "Missing");
-          delay(2000);
-        } else {
-          // Perform other initialization tasks
-          // ...
-          currentState = WAIT_FOR_BREATH; // Transition to waiting for breath
-          LOG_INFO("Transition: INITIALISE -> WAIT_FOR_BREATH");
-        }
-        break;
-      case WAIT_FOR_BREATH:
-        if (waitForBreath()) {
-          currentState = BREATH;
-          LOG_INFO("Transition: WAIT_FOR_BREATH -> BREATH");
-        }
-        break;
-      // ... (add cases for other states)
-    }
-        // ... (add cases for other states)
-    }
-    // I want to test the display... can you call something like this to let me test
-    // the display?
-
-
 
 
 

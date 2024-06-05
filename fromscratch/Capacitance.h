@@ -39,7 +39,7 @@ unsigned long capRead(){
     LOG_DEBUG("capDataL: %d", capDataL);
     capData = (capDataH << 16)|(capDataM << 8)|capDataL;
     
-    if((capData <= 8388608)&(verbose == 2)){
+    if (capData <= 8388608){
       LOG_ERROR("Capacitance Sensor - AD7745 - Data is less than 8388608");
       return 0;
     }
