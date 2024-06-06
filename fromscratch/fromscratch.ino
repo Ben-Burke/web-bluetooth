@@ -149,7 +149,7 @@ void loop() {
       int sensorValue = analogRead(A0);
       logMessage(LOG_LEVEL_INFO, "Sensor reading: %d", sensorValue);
       drawUI();
-      delay(3000);
+      delay(1000);
     
     switch (currentState) {
       case IDLE:
@@ -208,6 +208,11 @@ void loop() {
           LOG_INFO("Transition: WAIT_FOR_BREATH -> BREATH");
         }
         break;
+      case BREATH:
+        
+        acquireBreath();
+        // ... (add other logic for breath measurement)
+        break;
       // ... (add cases for other states)
     }
         // ... (add cases for other states)
@@ -252,7 +257,8 @@ bool waitForBreath() {
   // TODO: Implement this function
   // displayBaseMessage("waiting for", "breath");
   acquireBreath();
-  for (;;); // Don't proceed, loop forever
+  // for (;;); // Don't proceed, loop forever
+  return true;
 }
 
 
@@ -260,35 +266,54 @@ bool waitForBreath() {
 
 
 
-void sensorsRead(){
-   
-  cap = capRead(); 
-  
-  pressureInit();
-  
-  pressure = pressureRead();
 
-  
+void sensorsRead() {
+  static bool initialized = false; // Add a static variable to track initialization
+
+  LOG_DEBUG("Reading sensors - Capacitance");
+  cap = capRead();
+  LOG_DEBUG("Capacitance: %d", cap);
+
+  if (!initialized) { // Check if it's the first time sensorsRead is called
+    LOG_DEBUG("Pressure sensor initialisation -");
+    pressureInit();
+    initialized = true; // Set initialized to true after calling pressureInit
+  }
+
+  LOG_DEBUG("Reading sensors - Pressure");
+  pressure = pressureRead();
+  LOG_DEBUG("Pressure: %f", pressure);
+
+  // this assigment was suggested by copilot - I'm not sure if it's correct
+  init_pressure = pressure;
 }
 
 void acquireBreath() {
     
-
+    sensorsRead();
+    max_pressure = pressure - init_pressure;
+    LOG_DEBUG("Pressure is %f", pressure);
+    LOG_DEBUG("Initial Pressure is %f", init_pressure);
+    LOG_DEBUG("Max Pressure: %f", max_pressure);
     // Update Display with a countdown 
     if (dispUpdate + refreshRate < micros()) {
         display.clearDisplay();
         display.setTextSize(2);
         display.setTextColor(0xF);
 
+        LOG_DEBUG("Breath Start: %d", breathStart);
         if (breathStart + BREATH_LENGTH > micros()) {
+            LOG_DEBUG("Breath Length: %d", BREATH_LENGTH - (micros() - breathStart));
             display.setCursor(25, 50);
             display.print("Breathe");
             // ..(rest of the display update code from the BREATH case)
             display.display();
         } else if(max_pressure < BREATH_PRESSURE) {
+          LOG_DEBUG("Pressure too low: %f", max_pressure);
           // ... (rest of the display update code from the BREATH case)
         }
         else {
+            LOG_DEBUG("Breath Length: %d", BREATH_LENGTH - (micros() - breathStart));
             display.setCursor(25, 50);
             display.print("Waiting");
             display.setCursor(45, 70);
