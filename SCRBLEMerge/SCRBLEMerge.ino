@@ -211,6 +211,13 @@ void prepareScreen(){
           display.setTextColor(0xF);
 }
 
+
+void drawAndDisplayUI(){
+      drawUI();
+      display.display();
+      dispUpdate = micros();
+      
+}
 //******************************** Main Controll Loop ***************************
 void loop() {
   if(micros() >= lastRead + PERIOD){
@@ -308,6 +315,7 @@ void loop() {
           display.print("...");
           drawUI();
           display.display();
+          // ToDo - if dispUpdate = micros() then this can be a call to drawAndDisplayUI
           // Having trouble getting the appearance of the display to work here... stick with old code for now
           // displayBaseMessage("INITIALISE", "Please Wait");
           // dispUpdate = micros();
@@ -362,9 +370,7 @@ void loop() {
           display.print("For");
           display.setCursor(15, 90);
           display.print("Breath...");
-          drawUI();
-          display.display();
-          dispUpdate = micros();
+          drawAndDisplayUI();
         }
         
         //If the capacitance of the sensor increases move onto next state (after debouncing)
@@ -417,9 +423,7 @@ void loop() {
             display.print("...");
           }
   
-          drawUI();
-          display.display();
-          dispUpdate = micros();
+          drawAndDisplayUI();
         }
 
         //Checks if the breath has ended
@@ -449,9 +453,7 @@ void loop() {
           display.print("Processing");
           display.setCursor(45, 70);
           display.print("...");
-          drawUI();
-          display.display();
-          dispUpdate = micros();
+          drawAndDisplayUI();
         }
 
         //Check if enough time has passed
@@ -475,9 +477,7 @@ void loop() {
           display.print("Processing");
           display.setCursor(45, 70);
           display.print("...");
-          drawUI();
-          display.display();
-          dispUpdate = micros();
+          drawAndDisplayUI();
         }
 
         //Update the capacitance readings
@@ -514,9 +514,7 @@ void loop() {
           display.print("Processing");
           display.setCursor(45, 70);
           display.print("...");
-          drawUI();
-          display.display();
-          dispUpdate = micros();
+          drawAndDisplayUI();
         }
 
         //Check if enough time has passed
@@ -540,9 +538,7 @@ void loop() {
           display.print("Processing");
           display.setCursor(45, 70);
           display.print("...");
-          drawUI();
-          display.display();
-          dispUpdate = micros();
+          drawAndDisplayUI();
         }
 
         //Update the capacitance readings
@@ -568,9 +564,7 @@ void loop() {
           display.print("Processing");
           display.setCursor(45, 70);
           display.print("...");
-          drawUI();
-          display.display();
-          dispUpdate = micros();
+          drawAndDisplayUI();
         }
 
         //Check if enough time has passed
@@ -594,9 +588,7 @@ void loop() {
           display.print("Processing");
           display.setCursor(45, 70);
           display.print("...");
-          drawUI();
-          display.display();
-          dispUpdate = micros();
+          drawAndDisplayUI();
         }
 
         //Update the capacitance readings
@@ -614,6 +606,7 @@ void loop() {
 
       //Display the final results
       case COMPLETE:
+        // ToDo - this could be a call to InitialStatesCheck 
         if(voltage < SHUTDOWN_VOLTAGE){
           state = LOW_VOLTAGE;
           lv_time = micros();
@@ -625,9 +618,7 @@ void loop() {
 //          display.print("Measurements");
           display.setCursor(20, 70);
           display.print("Complete");
-          drawUI();
-          display.display();
-          dispUpdate = micros();
+          drawAndDisplayUI();
         }
 
         if(!detectMouthpiece()){
@@ -673,9 +664,7 @@ void loop() {
               display.print("Connect");
               display.setCursor(0,65);
               display.print("Mouthpiece");
-              drawUI();
-              display.display();
-              dispUpdate = micros();
+              drawAndDisplayUI();
           }
 
           delay(1);
