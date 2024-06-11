@@ -5,6 +5,7 @@
 #include <stdio.h> 
 #include "driver/rtc_io.h"
 #include "string.h"
+#include "Logger.h"
 
 //**************************** System Settings **********************************
 #define DEVICE_NAME         "Examin_Breathalyzer_1"
@@ -170,7 +171,8 @@ uint8_t charge = 0;
 void setup() {
   Serial.begin(15200);
   delay(5000);
-  Serial.println("Starting Examin Breathalyzer Merge Code"); 
+  LOG_INFO("Starting Examin Breathalyzer June2024 Merge Code");
+  // Serial.println("Starting Examin Breathalyzer Merge Code"); 
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
@@ -1071,26 +1073,43 @@ void dataLog(){
     double valFinal_2 = (((double)(capFinal_2))/8388608)*4096;
     double valFinal_3 = (((double)(capFinal_3))/8388608)*4096;
 
-    Serial.print("startCap,");
-    Serial.print(capVal);
-    Serial.print(",Pressure,");
-    Serial.print(pressure);
-    Serial.print(",ValInit,");
-    Serial.print(valInit);
-    Serial.print(",ValFinal_1,");
-    Serial.print(valFinal_1);
-    Serial.print(",ValFinal_2,");
-    Serial.print(valFinal_2);
-    Serial.print(",ValFinal_3,");
-    Serial.print(valFinal_3);
-    Serial.print(",ID,");
-    Serial.print(id);
-    Serial.print(",");
-    Serial.print((int) date[0]);
-    Serial.print((int) date[1]);
-    Serial.print((int) date[2]);
-    Serial.print(",");
-    Serial.println(state);
+    String csvString = "";  // Initialize an empty String
+
+// Add each variable to the string with commas
+    csvString += String(capVal, 4);  // Convert double to String with 4 decimal places
+    csvString += ",";
+    csvString += String(valInit, 4);
+    csvString += ",";
+    csvString += String(valFinal, 4);
+    csvString += ",";
+    csvString += String(valFinal_1, 4);
+    csvString += ",";
+    csvString += String(valFinal_2, 4);
+    csvString += ",";
+    csvString += String(valFinal_3, 4);
+    csvString += ",";
+    csvString += String(id);
+    csvString += ",";
+    csvString += String(date[0]) + "/" + String(date[1]) + "/" + String(date[2]);
+    csvString += ",";
+    csvString += String(state);
+    
+
+// Now csvString contains your comma-separated values
+
+
+    static bool headingPrinted = false;
+
+    if (!headingPrinted) {
+      Serial.println("startCap,Pressure,ValInit,ValFinal_1,ValFinal_2,ValFinal_3,ID,Date,State");
+      headingPrinted = true;
+    }
+
+
+// + "," + String(id) + "," + String(date[0]) + "/" + String(date[1]) + "/" + String(date[2]) + "," + String(state)
+     Serial.println(csvString);
+
+    // LOG_INFO();
   }
 
   if(verbose == 2) {
