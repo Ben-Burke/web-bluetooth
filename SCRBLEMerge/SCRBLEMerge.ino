@@ -1,9 +1,5 @@
 #include <Arduino.h>
-// #include <BLEDevice.h>
-// #include <BLEUtils.h>
-// #include <BLEServer.h>
 #include <ArduinoBLE.h>
-// #include <SparkFun_Bio_Sensor_Hub_Library.h>
 #include <Wire.h>
 #include <Adafruit_SSD1327.h>
 #include <stdio.h> 
@@ -72,62 +68,13 @@
 #define SHUTDOWN            12
 #define LOW_VOLTAGE         13
 
-//****************************** Battery Commands *******************************
-#define ADR_GG              (0xAA >> 1)
-
-
-#define GG_NVM_DATA(offset) (GG_CEXT_BLOCKDAT + offset)
-
-/*** I2C Word Sizes ***/
-#define WORD_SIZE_GG    (2)
-
-/*** Standard Commands ***/
-#define GG_CMD_CNTL         (0x00)
-#define GG_CMD_TEMP         (0x02)
-#define GG_CMD_VOLT         (0x04)
-#define GG_CMD_FLAG         (0x06)
-#define GG_CMD_NAC          (0x08)
-#define GG_CMD_FAC          (0x0A)
-#define GG_CMD_RM           (0x0C)
-#define GG_CMD_FCC          (0x0E)
-#define GG_CMD_AVGI         (0x10)
-#define GG_CMD_AVGP         (0x18)
-#define GG_CMD_SOC          (0x1C)
-#define GG_CMD_ITEMP        (0x1E)
-#define GG_CMD_SOH          (0x20)
-#define GG_CMD_OPCFG        (0x3A)
-#define GG_CMD_DCAP         (0x3C)
-
-/*** Standard Commands ***/
-#define GG_CEXT_DATCLASS    (0x3E)
-#define GG_CEXT_DATBLOCK    (0x3F)
-#define GG_CEXT_BLOCKDAT    (0x40)
-#define GG_CEXT_BLDATCHKS   (0x60)
-#define GG_CEXT_BLDATCTRL   (0x61)
-
-/*** Control Subcommands ***/
-#define GG_CTL_BATINSERT    (0x000C)
-#define GG_CTL_SETCFGUPD    (0x0013)
-#define GG_CTL_SOFTRESET    (0x0042)
-
-/*** Subclasses ***/
-#define GG_CLASS_STATE      (82)
-
-/*** Data Offsets ***/
-#define GG_OFS_OPCFG        (5)
-#define GG_OFS_DESCAP       (12)
-#define GG_OFS_DESENRGY     (14)
-
-/*** Register Bit Positions ***/
-#define BATLOWEN            (2)
-
 
 // The ArduinoBLE method begins here.
 #define MY_UUID(val) ("555a0002-" val "-467a-9538-01f0652c74ef")
 
 // fill in your name here. It will be combined with
 // the Arduino's MAC address to set the peripheral BLE name:
-const char myName[] = "looping_values";
+const char myName[] = "SCRBLE_1";
 
 // set up the service and the characteristics:
 BLEService                     examin_service                 (MY_UUID("0000"));
@@ -174,6 +121,10 @@ static const unsigned char PROGMEM u_bitmap[] = {
 TwoWire I2C2 = TwoWire(1);
 
 Adafruit_SSD1327 display(128, 128, &Wire, OLED_RESET_PIN, 400000);
+
+// snuck this in here as a shortcut
+void drawUI();
+#include "ScreenFunctions.h"
 
 //**************************** Global Variables *********************************
 bool deviceConnected = false;
@@ -250,6 +201,7 @@ void setup() {
 
 }
 
+void InitialStatesCheck(int &retFlag);
 
 //******************************** Main Controll Loop ***************************
 void loop() {
@@ -420,20 +372,10 @@ void loop() {
 
       //Waits until the breath has been finished
       case BREATH:
-        if(voltage < SHUTDOWN_VOLTAGE){
-          state = LOW_VOLTAGE;
-          lv_time = micros();
-        }
-        //Checks if the button has been pressed
-        if(!digitalRead(BUTTON_PIN)){
-          state = SHUTDOWN;
-        }
-        //Checks if the mouthpiece is connected
-        if(!detectMouthpiece()){
-          state = MOUTHPIECE_MISSING;
-          inactive_time = micros();
+        int retFlag;
+        InitialStatesCheck(retFlag);
+        if (retFlag == 2)
           break;
-        }
 
         if(pressure - init_pressure > max_pressure){
           max_pressure = pressure - init_pressure;
@@ -489,21 +431,10 @@ void loop() {
 
       //Waiting for the moisture to evaporate after the breath
       case WAIT_AFTER_BREATH_1:
-        if(voltage < SHUTDOWN_VOLTAGE){
-          state = LOW_VOLTAGE;
-          lv_time = micros();
-        }
-        //Check if the button has been pressed
-        if(!digitalRead(BUTTON_PIN)){
-          state = SHUTDOWN;
-        }
-
-        //Check if the mouthpiece is there
-        if(!detectMouthpiece()){
-          state = MOUTHPIECE_MISSING;
-          inactive_time = micros();
+        // ToDo Duplicate? int retFlag;
+        InitialStatesCheck(retFlag);
+        if (retFlag == 2)
           break;
-        }
 
         //Update the diplay
         if(dispUpdate + refreshRate < micros() ){
@@ -529,20 +460,9 @@ void loop() {
 
       //Meaure the final capacitance value of the sensor
       case MEASURE_1:
-        if(voltage < SHUTDOWN_VOLTAGE){
-          state = LOW_VOLTAGE;
-          lv_time = micros();
-        }
-        //Check if the button has been pressed
-        if(!digitalRead(BUTTON_PIN)){
-          state = SHUTDOWN;
-        }
-        //Check if the mouthpiece is connected
-        if(!detectMouthpiece()){
-          state = MOUTHPIECE_MISSING;
-          inactive_time = micros();
+        InitialStatesCheck(retFlag);
+        if (retFlag == 2)
           break;
-        }
 
         //Update the display
         if(dispUpdate + refreshRate < micros() ){
@@ -609,20 +529,9 @@ void loop() {
 
       //Meaure the final capacitance value of the sensor
       case MEASURE_2:
-        if(voltage < SHUTDOWN_VOLTAGE){
-          state = LOW_VOLTAGE;
-          lv_time = micros();
-        }
-        //Check if the button has been pressed
-        if(!digitalRead(BUTTON_PIN)){
-          state = SHUTDOWN;
-        }
-        //Check if the mouthpiece is connected
-        if(!detectMouthpiece()){
-          state = MOUTHPIECE_MISSING;
-          inactive_time = micros();
+        InitialStatesCheck(retFlag);
+        if (retFlag == 2)
           break;
-        }
 
         //Update the display
         if(dispUpdate + refreshRate < micros() ){
@@ -650,21 +559,9 @@ void loop() {
         break;
 
       case WAIT_AFTER_BREATH_3:
-        if(voltage < SHUTDOWN_VOLTAGE){
-          state = LOW_VOLTAGE;
-          lv_time = micros();
-        }
-        //Check if the button has been pressed
-        if(!digitalRead(BUTTON_PIN)){
-          state = SHUTDOWN;
-        }
-
-        //Check if the mouthpiece is there
-        if(!detectMouthpiece()){
-          state = MOUTHPIECE_MISSING;
-          inactive_time = micros();
+        InitialStatesCheck(retFlag);
+        if (retFlag == 2)
           break;
-        }
 
         //Update the diplay
         if(dispUpdate + refreshRate < micros() ){
@@ -690,20 +587,9 @@ void loop() {
 
       //Meaure the final capacitance value of the sensor
       case MEASURE_3:
-        if(voltage < SHUTDOWN_VOLTAGE){
-          state = LOW_VOLTAGE;
-          lv_time = micros();
-        }
-        //Check if the button has been pressed
-        if(!digitalRead(BUTTON_PIN)){
-          state = SHUTDOWN;
-        }
-        //Check if the mouthpiece is connected
-        if(!detectMouthpiece()){
-          state = MOUTHPIECE_MISSING;
-          inactive_time = micros();
+        InitialStatesCheck(retFlag);
+        if (retFlag == 2)
           break;
-        }
 
         //Update the display
         if(dispUpdate + refreshRate < micros() ){
@@ -843,11 +729,33 @@ void loop() {
     }
  
 
-  }  
+  }
 }
 
-
-
+void InitialStatesCheck(int &retFlag)
+{
+  retFlag = 1;
+  if (voltage < SHUTDOWN_VOLTAGE)
+  {
+    state = LOW_VOLTAGE;
+    lv_time = micros();
+  }
+  // Checks if the button has been pressed
+  if((!digitalRead(BUTTON_PIN))|(inactive_time + SLEEP_TIME < micros()))
+  {
+    state = SHUTDOWN;
+  }
+  // Checks if the mouthpiece is connected
+  if (!detectMouthpiece())
+  {
+    state = MOUTHPIECE_MISSING;
+    inactive_time = micros();
+    {
+      retFlag = 2;
+      return;
+    };
+  }
+}
 
 void bleInit(){
 // start the BLE radio:
