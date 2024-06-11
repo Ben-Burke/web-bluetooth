@@ -133,7 +133,6 @@ bool deviceConnected = false;
 char BLEbuf[50];
 
 uint32_t temp;
-float handTemp;
 double pressure;
 double max_pressure;
 double init_pressure = 1;
@@ -225,7 +224,7 @@ void loop() {
   if(micros() >= lastRead + PERIOD){
     lastRead = micros();
 
-    
+    int retFlag; // for the InitialStatesCheck function
     
     if((state != IDLE)|(state != MOUTHPIECE_MISSING)|(state != SHUTDOWN)){
       pressureInit();
@@ -315,9 +314,10 @@ void loop() {
           display.print("INITIALISE");
           display.setCursor(45, 70);
           display.print("...");
-          drawUI();
-          display.display();
+          // drawUI();
+          // display.display();
           // ToDo - if dispUpdate = micros() then this can be a call to drawAndDisplayUI
+          drawAndDisplayUI();
           // Having trouble getting the appearance of the display to work here... stick with old code for now
           // displayBaseMessage("INITIALISE", "Please Wait");
           // dispUpdate = micros();
@@ -345,20 +345,21 @@ void loop() {
 
       //Wait until the mouthpiece is breathed into
       case WAIT_FOR_BREATH:
-        if(voltage < SHUTDOWN_VOLTAGE){
-          state = LOW_VOLTAGE;
-          lv_time = micros();
-        }
-        //Check if the button has been pressed
-        if((!digitalRead(BUTTON_PIN))|(inactive_time + SLEEP_TIME < micros())){
-          state = SHUTDOWN;
-        }
-        //Check if the mouthpiece is connected
-        if(!detectMouthpiece()){
-          state = MOUTHPIECE_MISSING;
-          inactive_time = micros();
-          break;
-        }
+        InitialStatesCheck( retFlag );
+        // if(voltage < SHUTDOWN_VOLTAGE){
+        //   state = LOW_VOLTAGE;
+        //   lv_time = micros();
+        // }
+        // //Check if the button has been pressed
+        // if((!digitalRead(BUTTON_PIN))|(inactive_time + SLEEP_TIME < micros())){
+        //   state = SHUTDOWN;
+        // }
+        // //Check if the mouthpiece is connected
+        // if(!detectMouthpiece()){
+        //   state = MOUTHPIECE_MISSING;
+        //   inactive_time = micros();
+        //   break;
+        // }
 
 
 
@@ -388,7 +389,6 @@ void loop() {
 
       //Waits until the breath has been finished
       case BREATH:
-        int retFlag;
         InitialStatesCheck(retFlag);
         if (retFlag == 2)
           break;
@@ -1056,7 +1056,6 @@ bool detectMouthpiece(){
 
 void sensorsRead(){
 
-  handTemp = 1;
 
   cap = capRead(); 
   pressure = pressureRead();
@@ -1093,7 +1092,7 @@ void dataLog(){
     csvString += String(date[0]) + "/" + String(date[1]) + "/" + String(date[2]);
     csvString += ",";
     csvString += String(state);
-    
+
 
 // Now csvString contains your comma-separated values
 
