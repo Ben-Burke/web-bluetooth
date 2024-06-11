@@ -177,6 +177,7 @@ void setup() {
   pinMode(GREEN_LED_PIN, OUTPUT);
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(ENABLE_12V_PIN, OUTPUT);
+  //ToDo - what the hell is pin 10 and where is OUTPUT and INPUT_PULLUP apparently NOT defined?
   pinMode(10, OUTPUT);
   digitalWrite(10, 1);
   digitalWrite(GREEN_LED_PIN, 0);
@@ -202,6 +203,13 @@ void setup() {
 }
 
 void InitialStatesCheck(int &retFlag);
+
+
+void prepareScreen(){
+          display.clearDisplay();
+          display.setTextSize(2);
+          display.setTextColor(0xF);
+}
 
 //******************************** Main Controll Loop ***************************
 void loop() {
@@ -300,7 +308,9 @@ void loop() {
           display.print("...");
           drawUI();
           display.display();
-          dispUpdate = micros();
+          // Having trouble getting the appearance of the display to work here... stick with old code for now
+          // displayBaseMessage("INITIALISE", "Please Wait");
+          // dispUpdate = micros();
         }
         //Set the LEDs
         digitalWrite(GREEN_LED_PIN, 1);
@@ -345,9 +355,7 @@ void loop() {
 
         //Update the display
         if(dispUpdate + refreshRate < micros() ){
-          display.clearDisplay();
-          display.setTextSize(2);
-          display.setTextColor(0xF);
+          prepareScreen();
           display.setCursor(25, 50);
           display.print("Waiting");
           display.setCursor(45, 70);
@@ -383,9 +391,7 @@ void loop() {
 
         //Updates display
         if(dispUpdate + refreshRate < micros() ){
-          display.clearDisplay();
-          display.setTextSize(2);
-          display.setTextColor(0xF);
+          prepareScreen();
 
           if(breathStart + BREATH_LENGTH > micros()){
             display.setCursor(25, 50);
@@ -438,9 +444,7 @@ void loop() {
 
         //Update the diplay
         if(dispUpdate + refreshRate < micros() ){
-          display.clearDisplay();
-          display.setTextColor(0xF);
-          display.setTextSize(2);
+          prepareScreen();
           display.setCursor(0, 50);
           display.print("Processing");
           display.setCursor(45, 70);
@@ -466,9 +470,7 @@ void loop() {
 
         //Update the display
         if(dispUpdate + refreshRate < micros() ){
-          display.clearDisplay();
-          display.setTextColor(0xF);
-          display.setTextSize(2);
+          prepareScreen();
           display.setCursor(0, 50);
           display.print("Processing");
           display.setCursor(45, 70);
@@ -507,9 +509,7 @@ void loop() {
 
         //Update the diplay
         if(dispUpdate + refreshRate < micros() ){
-          display.clearDisplay();
-          display.setTextColor(0xF);
-          display.setTextSize(2);
+          prepareScreen();
           display.setCursor(0, 50);
           display.print("Processing");
           display.setCursor(45, 70);
@@ -535,9 +535,7 @@ void loop() {
 
         //Update the display
         if(dispUpdate + refreshRate < micros() ){
-          display.clearDisplay();
-          display.setTextColor(0xF);
-          display.setTextSize(2);
+          prepareScreen();
           display.setCursor(0, 50);
           display.print("Processing");
           display.setCursor(45, 70);
@@ -565,9 +563,7 @@ void loop() {
 
         //Update the diplay
         if(dispUpdate + refreshRate < micros() ){
-          display.clearDisplay();
-          display.setTextColor(0xF);
-          display.setTextSize(2);
+          prepareScreen();
           display.setCursor(0, 50);
           display.print("Processing");
           display.setCursor(45, 70);
@@ -593,9 +589,7 @@ void loop() {
 
         //Update the display
         if(dispUpdate + refreshRate < micros() ){
-          display.clearDisplay();
-          display.setTextColor(0xF);
-          display.setTextSize(2);
+          prepareScreen();
           display.setCursor(0, 50);
           display.print("Processing");
           display.setCursor(45, 70);
@@ -626,9 +620,7 @@ void loop() {
         }
         //If the virus is detected display that, else display that the result is negative
         if(dispUpdate + refreshRate < micros() ){
-          display.clearDisplay();
-          display.setTextColor(0xF);
-          display.setTextSize(2);
+          prepareScreen();
 //          display.setCursor(0, 50);
 //          display.print("Measurements");
           display.setCursor(20, 70);
@@ -676,9 +668,7 @@ void loop() {
           date[2] = 0;
 
           if(dispUpdate + refreshRate < micros() ){
-              display.clearDisplay();
-              display.setTextColor(0xF); 
-              display.setTextSize(2);
+              prepareScreen();
               display.setCursor(20, 50);
               display.print("Connect");
               display.setCursor(0,65);
@@ -711,10 +701,7 @@ void loop() {
         }
         
         if(dispUpdate + refreshRate < micros() ){
-            
-              display.clearDisplay();
-              display.setTextColor(0xF); 
-              display.setTextSize(2);
+              prepareScreen();            
               display.setCursor(20, 50);
               display.print("BATTERY");
               display.setCursor(45,65);
@@ -1095,19 +1082,19 @@ void dataLog(){
     double valFinal_2 = (((double)(capFinal_2))/8388608)*4096;
     double valFinal_3 = (((double)(capFinal_3))/8388608)*4096;
 
-    Serial.print("start,");
+    Serial.print("startCap,");
     Serial.print(capVal);
-    Serial.print(",");
+    Serial.print(",Pressure,");
     Serial.print(pressure);
-    Serial.print(",");
+    Serial.print(",ValInit,");
     Serial.print(valInit);
-    Serial.print(",");
+    Serial.print(",ValFinal_1,");
     Serial.print(valFinal_1);
-    Serial.print(",");
+    Serial.print(",ValFinal_2,");
     Serial.print(valFinal_2);
-    Serial.print(",");
+    Serial.print(",ValFinal_3,");
     Serial.print(valFinal_3);
-    Serial.print(",");
+    Serial.print(",ID,");
     Serial.print(id);
     Serial.print(",");
     Serial.print((int) date[0]);
