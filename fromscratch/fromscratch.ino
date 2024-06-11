@@ -277,6 +277,7 @@ void sensorsRead() {
   if (!initialized) { // Check if it's the first time sensorsRead is called
     LOG_DEBUG("Pressure sensor initialisation -");
     pressureInit();
+    init_pressure = pressureRead();
     initialized = true; // Set initialized to true after calling pressureInit
   }
 
@@ -284,8 +285,8 @@ void sensorsRead() {
   pressure = pressureRead();
   LOG_DEBUG("Pressure: %f", pressure);
 
-  // this assigment was suggested by copilot - I'm not sure if it's correct
-  init_pressure = pressure;
+  // this assigment was suggested by copilot - I'm not sure if it's correct - looks like no
+  // init_pressure = pressure;
 }
 
 void acquireBreath() {
