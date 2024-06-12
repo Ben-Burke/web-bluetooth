@@ -240,6 +240,7 @@ void setVirusCharacteristics(){
 }
 //******************************** Main Controll Loop ***************************
 void loop() {
+  //ToDo remove this is isn't used 
   if(micros() >= lastRead + PERIOD){
     lastRead = micros();
 
@@ -251,6 +252,7 @@ void loop() {
       dataLog();
       bleUpdate();
     }else{
+      // who needs temp when you have beurer and a pulse oximeter?
       temp = 0;
       cap = 0; 
       pressure = 0;
@@ -272,7 +274,7 @@ void loop() {
         digitalWrite(RED_LED_PIN, 0);
 
         delay(500);
-
+        //why pin 6 Owen?
         rtc_gpio_pullup_en(GPIO_NUM_6);
         rtc_gpio_pulldown_dis(GPIO_NUM_6);
         esp_sleep_enable_ext0_wakeup((gpio_num_t)GPIO_NUM_6, 0);
@@ -280,6 +282,7 @@ void loop() {
         break;
 
       case IDLE:
+        //Not required for June24 Release
         if(voltage < SHUTDOWN_VOLTAGE){
           state = LOW_VOLTAGE;
           lv_time = micros();
@@ -288,6 +291,7 @@ void loop() {
 
         state = INITIALISE;
 
+        // Turn on the screen
         digitalWrite(ENABLE_12V_PIN, 1);
         digitalWrite(GREEN_LED_PIN, 1);
 
