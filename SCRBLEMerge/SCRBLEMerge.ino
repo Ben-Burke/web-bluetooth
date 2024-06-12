@@ -81,6 +81,7 @@ const char myName[] = "SCRBLE_1";
 // set up the service and the characteristics:
 BLEService                     examin_service                 (MY_UUID("0000"));
 
+BLEIntCharacteristic           VirusFinalCharacteristic  (MY_UUID("0010"), BLERead | BLEWrite);
 BLEIntCharacteristic           VirusSensorCharacteristic  (MY_UUID("0005"), BLERead | BLEWrite);
 BLEIntCharacteristic           VirusInitialCharacteristic  (MY_UUID("0006"), BLERead | BLEWrite);
 BLEIntCharacteristic           VirusMeasurement1Characteristic  (MY_UUID("0007"), BLERead | BLEWrite);
@@ -771,6 +772,7 @@ void bleInit(){
   examin_service.addCharacteristic(VirusMeasurement1Characteristic);
   examin_service.addCharacteristic(VirusMeasurement2Characteristic);
   examin_service.addCharacteristic(VirusMeasurement3Characteristic);
+  examin_service.addCharacteristic(VirusFinalCharacteristic);
   
 
   //This initializes the characteristics defined above
@@ -779,6 +781,7 @@ void bleInit(){
   VirusMeasurement1Characteristic.writeValue(0);
   VirusMeasurement2Characteristic.writeValue(0);
   VirusMeasurement3Characteristic.writeValue(0);
+  VirusFinalCharacteristic.writeValue(0);
   
 
   // add the service to the peripheral and advertise it:
@@ -1103,6 +1106,12 @@ void dataLog(){
     csvString += ",";
     csvString += String(state);
 
+  VirusSensorCharacteristic.writeValue(capVal);
+  VirusInitialCharacteristic.writeValue(valInit);
+  VirusMeasurement1Characteristic.writeValue(valFinal_1);
+  VirusMeasurement2Characteristic.writeValue(valFinal_2);
+  VirusMeasurement3Characteristic.writeValue(valFinal_3);
+  VirusFinalCharacteristic.writeValue(valFinal);
 
 // Now csvString contains your comma-separated values
 
