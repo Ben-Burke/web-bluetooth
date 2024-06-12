@@ -68,6 +68,7 @@
 #define MOUTHPIECE_MISSING  11
 #define SHUTDOWN            12
 #define LOW_VOLTAGE         13
+#define BLE_AVAILABLE       14 // use this to enable offline testing as discussed
 
 
 // The ArduinoBLE method begins here.
@@ -301,21 +302,13 @@ void loop() {
 
       //Initialize the device, take the initial capacitance measurements before the breath 
       case INITIALISE:
-        if(voltage < SHUTDOWN_VOLTAGE){
-          state = LOW_VOLTAGE;
-          lv_time = micros();
-        }
-        //Check if the button has been pressed
-        if(!digitalRead(BUTTON_PIN)){
-          state = SHUTDOWN;
-        }
-        //Check if the mouthpiece is connected
-        if(!detectMouthpiece()){
-          state = MOUTHPIECE_MISSING;
-          inactive_time = micros();
+        // candidate for Macro ToDo
+        InitialStatesCheck(retFlag);
+        if (retFlag == 2)
           break;
-        }
 
+        //Todo - this is a candidate for June24 release
+        //ToDo - I'm thinking we should have a date time set from front end on BLE connection - for future.
         if(date[0] == 0){
           date[0] = readEEPROM(1);
           date[1] = readEEPROM(2);
@@ -330,6 +323,7 @@ void loop() {
 
         //Update the display
         if(dispUpdate + refreshRate < micros() ){
+          // Can be using drawAndDisplayUI
           display.clearDisplay();
           display.setTextSize(2);
           display.setTextColor(0xF);
@@ -516,6 +510,7 @@ void loop() {
         break;
 
       case WAIT_AFTER_BREATH_2:
+        // candidate for InitialStatesCheck
         if(voltage < SHUTDOWN_VOLTAGE){
           state = LOW_VOLTAGE;
           lv_time = micros();
@@ -645,7 +640,7 @@ void loop() {
           display.print("Complete");
           drawAndDisplayUI();
         }
-
+        // anothe candidate for InitialStatesCheck
         if(!detectMouthpiece()){
           state = MOUTHPIECE_MISSING;
           inactive_time = micros();
