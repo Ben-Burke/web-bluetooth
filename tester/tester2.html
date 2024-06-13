@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BLE Service Explorer with Notifications</title>
+</head>
+<body>
+  <button id="connectButton">Connect</button>
+  <div id="status"></div> <div id="status"></div>
+
+  <h2>Characteristics</h2>
+  <div id="characteristicsDisplay"></div>
+
+  <script>
+    const connectButton = document.getElementById('connectButton');
+    const statusDiv = document.getElementById('status'); // Add this line
+    const characteristicsDisplay = document.getElementById('characteristicsDisplay');
+    let device;
+    let server; // Added for storing the GATT server
+    
+    // Define the service and characteristic UUIDs
+    const EXAMIN_SERVICE_UUID = "555a0002-0000-467a-9538-01f0652c74ef";
+    const CHARACTERISTIC_UUIDS = [
+      { uuid: "555a0002-0005-467a-9538-01f0652c74ef", name: "VirusSensor" },
+      { uuid: "555a0002-0006-467a-9538-01f0652c74ef", name: "VirusInitial" },
+      { uuid: "555a0002-0007-467a-9538-01f0652c74ef", name: "VirusMeasurement1" },
+      { uuid: "555a0002-0008-467a-9538-01f0652c74ef", name: "VirusMeasurement2" },
+      { uuid: "555a0002-0009-467a-9538-01f0652c74ef", name: "VirusMeasurement3" },
+      { uuid: "555a0002-0010-467a-9538-01f0652c74ef", name: "VirusFinal" }
+    ];
+
+    connectButton.addEventListener('click', async () => {
+      try {
+        device = await navigator.bluetooth.requestDevice({
+          filters: [{ name: 'SCRBLE_1' }],
+          optionalServices: [EXAMIN_SERVICE_UUID] 
+        });
+
+        server = await device.gatt.connect(); 
+        statusDiv.textContent = "Connected";
+
+        // Start notifications for each characteristic
+        await startNotifications();
+      } catch (error) {
+        statusDiv.textContent = `Error: ${error}`;
+      }
+    });
+
+
+    async function startNotifications() {
+      const service = await server.getPrimaryService(EXAMIN_SERVICE_UUID);
+
+      for (const charConfig of CHARACTERISTIC_UUIDS) {
+        const characteristic = await service.getCharacteristic(charConfig.uuid);
+        await characteristic.startNotifications();
+
+        characteristic.addEventListener('characteristicvaluechanged', event => {
+          const value = event.target.value.getUint32(0, true);
+          const p = document.createElement('p');
+          p.textContent = `${charConfig.name}: ${value}`;
+          characteristicsDisplay.appendChild(p);
+        });
+      }
+    }
+  </script>
+</body>
+</html>
+
