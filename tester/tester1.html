@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BLE Service Explorer</title>
+</head>
+<body>
+  <button id="connectButton">Connect</button>
+  <button id="discoverServicesButton" disabled>Discover Services</button>
+  <button id="readCharacteristicsButton" disabled>Read Characteristics</button>
+  <div id="status"></div>
+
+  <h2>Services</h2>
+  <ul id="servicesList"></ul>
+
+  <h2>Characteristics</h2>
+  <div id="characteristicsDisplay"></div>
+
+  <script>
+    const connectButton = document.getElementById('connectButton');
+    const discoverServicesButton = document.getElementById('discoverServicesButton');
+    const readCharacteristicsButton = document.getElementById('readCharacteristicsButton');
+    const statusDiv = document.getElementById('status');
+    const servicesList = document.getElementById('servicesList');
+    const characteristicsDisplay = document.getElementById('characteristicsDisplay');
+    let device;
+
+    connectButton.addEventListener('click', async () => {
+      try {
+        device = await navigator.bluetooth.requestDevice({
+          filters: [{ name: 'SCRBLE_1' }]  // Connect to device by name
+        });
+        await device.gatt.connect();
+        statusDiv.textContent = "Connected";
+        discoverServicesButton.disabled = false;
+      } catch (error) {
+        statusDiv.textContent = `Error: ${error}`;
+      }
+    });
+
+    discoverServicesButton.addEventListener('click', async () => {
+      try {
+        const services = await device.gatt.getPrimaryServices();
+        displayServices(services);
+        readCharacteristicsButton.disabled = false;
+      } catch (error) {
+        statusDiv.textContent = `Error discovering services: ${error}`;
+      }
+    });
+
+    readCharacteristicsButton.addEventListener('click', async () => {
+      try {
+        await readAndDisplayCharacteristics();
+      } catch (error) {
+        statusDiv.textContent = `Error reading characteristics: ${error}`;
+      }
+    });
+
+    function displayServices(services) {
+      servicesList.innerHTML = '';
+      services.forEach(service => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `Service UUID: ${service.uuid}`;
+        servicesList.appendChild(listItem);
+      });
+    }
+
+  async function readAndDisplayCharacteristics() {
+  const services = await device.gatt.getPrimaryServices();
+  characteristicsDisplay.innerHTML = '';
+
+  for (const service of services) {
+    const characteristics = await service.getCharacteristics();
+
+    for (const characteristic of characteristics) {
+      const value = await characteristic.readValue();
+
+      // Decode the value from the DataView
+      let displayValue;
+      switch (value.byteLength) {
+        case 1:
+          displayValue = value.getUint8(0); 
+          break;
+        case 2:
+          displayValue = value.getUint16(0, true); // Use little-endian for consistency
+          break;
+        case 4:
+          displayValue = value.getUint32(0, true); // Use little-endian for consistency
+          break;
+        default:
+          displayValue = "Unsupported value length";
+      }
+
+      const p = document.createElement('p');
+      p.textContent = `Service: ${service.uuid}, Characteristic: ${characteristic.uuid}, Value: ${displayValue}`;
+      characteristicsDisplay.appendChild(p);
+    }
+  }
+}
+
+
+
+   </script>
+</body>
+</html>
+

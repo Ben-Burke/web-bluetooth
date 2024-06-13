@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BLE Tester</title>
+</head>
+<body>
+  <button id="connectButton">Connect</button>
+  <button id="readButton" disabled>Read Characteristics</button>
+  <div id="status"></div>
+
+  <h2>Characteristics</h2>
+  <div id="characteristicsDisplay"></div>
+
+  <script>
+    const connectButton = document.getElementById('connectButton');
+    const readButton = document.getElementById('readButton');
+    const statusDiv = document.getElementById('status');
+    const characteristicsDisplay = document.getElementById('characteristicsDisplay');
+    let device;
+    let server; // Added for storing the GATT server
+    
+    // Define the service and characteristic UUIDs
+    const EXAMIN_SERVICE_UUID = "555a0002-0000-467a-9538-01f0652c74ef";
+    const CHARACTERISTIC_UUIDS = [
+      { uuid: "555a0002-0005-467a-9538-01f0652c74ef", name: "VirusSensor" },
+      { uuid: "555a0002-0006-467a-9538-01f0652c74ef", name: "VirusInitial" },
+      { uuid: "555a0002-0007-467a-9538-01f0652c74ef", name: "VirusMeasurement1" },
+      { uuid: "555a0002-0008-467a-9538-01f0652c74ef", name: "VirusMeasurement2" },
+      { uuid: "555a0002-0009-467a-9538-01f0652c74ef", name: "VirusMeasurement3" },
+      { uuid: "555a0002-0010-467a-9538-01f0652c74ef", name: "VirusFinal" }
+    ];
+
+    connectButton.addEventListener('click', async () => {
+      try {
+        device = await navigator.bluetooth.requestDevice({
+          filters: [{ name: 'SCRBLE_1' }],
+          optionalServices: [EXAMIN_SERVICE_UUID] // Add the service UUID here
+        });
+
+        server = await device.gatt.connect(); 
+        statusDiv.textContent = "Connected";
+        readButton.disabled = false; 
+      } catch (error) {
+        statusDiv.textContent = `Error: ${error}`;
+      }
+    });
+
+    readButton.addEventListener('click', async () => {
+      try {
+        await readAndDisplayCharacteristics();
+      } catch (error) {
+        statusDiv.textContent = `Error reading characteristics: ${error}`;
+      }
+    });
+
+    async function readAndDisplayCharacteristics() {
+      if (!device || !server) {
+        throw new Error("Not connected to device");
+      }
+
+      const service = await server.getPrimaryService(EXAMIN_SERVICE_UUID);
+
+      characteristicsDisplay.innerHTML = ''; 
+
+      for (const charConfig of CHARACTERISTIC_UUIDS) {
+        const characteristic = await service.getCharacteristic(charConfig.uuid);
+        const value = await characteristic.readValue();
+        const displayValue = value.getUint32();
+
+        const p = document.createElement('p');
+        p.textContent = `${charConfig.name}: ${displayValue}`;
+        characteristicsDisplay.appendChild(p);
+      }
+    }
+  </script>
+</body>
+</html>
+
