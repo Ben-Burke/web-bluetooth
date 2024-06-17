@@ -8,7 +8,6 @@
 #include "Logger.h"
 
 //**************************** System Settings **********************************
-#define DEVICE_NAME         "Examin_Breathalyzer_1"
 #define verbose             1
 
 //****************************** Flow Settings **********************************
@@ -76,17 +75,17 @@
 
 // fill in your name here. It will be combined with
 // the Arduino's MAC address to set the peripheral BLE name:
-const char myName[] = "SCRBLE_1";
+const char* deviceName = "SCRBLE_1";
 
 // set up the service and the characteristics:
-BLEService                     examin_service                 (MY_UUID("0000"));
+BLEService                     examinService                 (MY_UUID("0000"));
 
-BLEIntCharacteristic           VirusFinalCharacteristic  (MY_UUID("0010"), BLERead | BLEWrite);
-BLEIntCharacteristic           VirusSensorCharacteristic  (MY_UUID("0005"), BLERead | BLEWrite);
-BLEIntCharacteristic           VirusInitialCharacteristic  (MY_UUID("0006"), BLERead | BLEWrite);
-BLEIntCharacteristic           VirusMeasurement1Characteristic  (MY_UUID("0007"), BLERead | BLEWrite);
-BLEIntCharacteristic           VirusMeasurement2Characteristic  (MY_UUID("0008"), BLERead | BLEWrite);
-BLEIntCharacteristic           VirusMeasurement3Characteristic  (MY_UUID("0009"), BLERead | BLEWrite);
+BLEStringCharacteristic           VirusFinalCharacteristic  (MY_UUID("0010"), BLERead | BLEWrite, 20);
+BLEStringCharacteristic           VirusSensorCharacteristic  (MY_UUID("0005"), BLERead | BLEWrite, 20);
+BLEStringCharacteristic           VirusInitialCharacteristic  (MY_UUID("0006"), BLERead | BLEWrite, 20);
+BLEStringCharacteristic           VirusMeasurement1Characteristic  (MY_UUID("0007"), BLERead | BLEWrite, 20);
+BLEStringCharacteristic           VirusMeasurement2Characteristic  (MY_UUID("0008"), BLERead | BLEWrite, 20);
+BLEStringCharacteristic           VirusMeasurement3Characteristic  (MY_UUID("0009"), BLERead | BLEWrite, 20);
 
 
 //****************************** Screen Bitmaps *********************************
@@ -172,7 +171,7 @@ uint8_t charge = 0;
 void setup() {
   Serial.begin(15200);
   delay(5000);
-  LOG_INFO("Starting Examin Breathalyzer June2024 Merge Code");
+  LOG_INFO("Starting Examin Breathalyzer June2024 SCRBLE Merge Code");
   // Serial.println("Starting Examin Breathalyzer Merge Code"); 
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
@@ -757,36 +756,30 @@ void InitialStatesCheck(int &retFlag)
 void bleInit(){
 // start the BLE radio:
   if (!BLE.begin()) {
-    Serial.println("Failed to start BLE");
+    Serial.println("Failed to initialize BLE!");
+    while (1);
   }
-  // set the peripheral's local name:
-  BLE.setLocalName(myName);
+  Serial.println("BLE Started");
+  // pinMode(LED_BUILTIN, OUTPUT);
+  // digitalWrite(LED_BUILTIN, HIGH);
+  // Set the local name peripheral advertises
+  BLE.setLocalName(deviceName);
+  BLE.setAdvertisedService(examinService); // Advertise the service UUID
 
-  // set the advertised service:
-  BLE.setAdvertisedService(examin_service);
-  // add the characteristics:
-  
-  // This creates characteristics for all those defined above
-  examin_service.addCharacteristic(VirusSensorCharacteristic);
-  examin_service.addCharacteristic(VirusInitialCharacteristic);
-  examin_service.addCharacteristic(VirusMeasurement1Characteristic);
-  examin_service.addCharacteristic(VirusMeasurement2Characteristic);
-  examin_service.addCharacteristic(VirusMeasurement3Characteristic);
-  examin_service.addCharacteristic(VirusFinalCharacteristic);
-  
+  // Add characteristics to the service
+  examinService.addCharacteristic(VirusSensorCharacteristic);
+  examinService.addCharacteristic(VirusInitialCharacteristic);
+  examinService.addCharacteristic(VirusMeasurement1Characteristic);
+  examinService.addCharacteristic(VirusMeasurement2Characteristic);
+  examinService.addCharacteristic(VirusMeasurement3Characteristic);
+  examinService.addCharacteristic(VirusFinalCharacteristic);
 
-  //This initializes the characteristics defined above
-  VirusSensorCharacteristic.writeValue(0);
-  VirusInitialCharacteristic.writeValue(0);
-  VirusMeasurement1Characteristic.writeValue(0);
-  VirusMeasurement2Characteristic.writeValue(0);
-  VirusMeasurement3Characteristic.writeValue(0);
-  VirusFinalCharacteristic.writeValue(0);
+  // Add the service
+  BLE.addService(examinService);
   
-
-  // add the service to the peripheral and advertise it:
-  BLE.addService(examin_service);
+  // Start advertising
   BLE.advertise();
+  Serial.println("Waiting for connections...");
 }
 
 
@@ -801,12 +794,38 @@ void bleUpdate(){
   // VirusMeasurement2Characteristic.writeValue(0);
   // VirusMeasurement3Characteristic.writeValue(0);
 
-//   double valInit = (((double)(capInitial))/8388608)*4096;
-//   double valFinal_1 = (((double)(capFinal_1))/8388608)*4096;
-//   double valFinal_2 = (((double)(capFinal_2))/8388608)*4096;
-//   double valFinal_3 = (((double)(capFinal_3))/8388608)*4096;
+  double capVal = (((double)(cap))/8388608)*4096;
+  double valInit = (((double)(capInitial))/8388608)*4096;
+  double valFinal_1 = (((double)(capFinal_1))/8388608)*4096;
+  double valFinal_2 = (((double)(capFinal_2))/8388608)*4096;
+  double valFinal_3 = (((double)(capFinal_3))/8388608)*4096;
 
-  castVirusVariables();
+  String strCapVal = String(capVal);
+  String strValInit = String(valInit);
+  String strValFinal_1 = String(valFinal_1);
+  String strValFinal_2 = String(valFinal_2);
+  String strValFinal_3 = String(valFinal_3);
+
+  BLEDevice central = BLE.central();
+
+  if (central) {
+    Serial.print("Connected to central: ");
+    Serial.println(central.address());
+    // digitalWrite(LED_BUILTIN, HIGH); 
+
+    // while (central.connected()){
+
+
+      VirusSensorCharacteristic.writeValue(strCapVal);
+      VirusInitialCharacteristic.writeValue(strValInit);
+      VirusMeasurement1Characteristic.writeValue(strValFinal_1);
+      VirusMeasurement2Characteristic.writeValue(strValFinal_2);
+      VirusMeasurement3Characteristic.writeValue(strValFinal_3);
+      
+      delay(1000); 
+    // }
+  }
+  // castVirusVariables();
 
 //   String init = String(valInit);
 //   String fin1 = String(valFinal_1);
@@ -1106,12 +1125,13 @@ void dataLog(){
     csvString += ",";
     csvString += String(state);
 
-  VirusSensorCharacteristic.writeValue(capVal);
-  VirusInitialCharacteristic.writeValue(valInit);
-  VirusMeasurement1Characteristic.writeValue(valFinal_1);
-  VirusMeasurement2Characteristic.writeValue(valFinal_2);
-  VirusMeasurement3Characteristic.writeValue(valFinal_3);
-  VirusFinalCharacteristic.writeValue(valFinal);
+  // trying these as strings
+  // VirusSensorCharacteristic.writeValue(capVal);
+  // VirusInitialCharacteristic.writeValue(valInit);
+  // VirusMeasurement1Characteristic.writeValue(valFinal_1);
+  // VirusMeasurement2Characteristic.writeValue(valFinal_2);
+  // VirusMeasurement3Characteristic.writeValue(valFinal_3);
+  // VirusFinalCharacteristic.writeValue(valFinal);
 
 // Now csvString contains your comma-separated values
 
