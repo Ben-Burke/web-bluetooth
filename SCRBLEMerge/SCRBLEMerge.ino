@@ -80,12 +80,12 @@ const char* deviceName = "SCRBLE_1";
 // set up the service and the characteristics:
 BLEService                     examinService                 (MY_UUID("0000"));
 
-BLEStringCharacteristic           VirusFinalCharacteristic  (MY_UUID("0010"), BLERead | BLEWrite, 20);
-BLEStringCharacteristic           VirusSensorCharacteristic  (MY_UUID("0005"), BLERead | BLEWrite, 20);
-BLEStringCharacteristic           VirusInitialCharacteristic  (MY_UUID("0006"), BLERead | BLEWrite, 20);
-BLEStringCharacteristic           VirusMeasurement1Characteristic  (MY_UUID("0007"), BLERead | BLEWrite, 20);
-BLEStringCharacteristic           VirusMeasurement2Characteristic  (MY_UUID("0008"), BLERead | BLEWrite, 20);
-BLEStringCharacteristic           VirusMeasurement3Characteristic  (MY_UUID("0009"), BLERead | BLEWrite, 20);
+BLEIntCharacteristic           VirusFinalCharacteristic  (MY_UUID("0010"), BLERead | BLEWrite);
+BLEIntCharacteristic           VirusSensorCharacteristic  (MY_UUID("0005"), BLERead | BLEWrite);
+BLEIntCharacteristic           VirusInitialCharacteristic  (MY_UUID("0006"), BLERead | BLEWrite);
+BLEIntCharacteristic           VirusMeasurement1Characteristic  (MY_UUID("0007"), BLERead | BLEWrite);
+BLEIntCharacteristic           VirusMeasurement2Characteristic  (MY_UUID("0008"), BLERead | BLEWrite);
+BLEIntCharacteristic           VirusMeasurement3Characteristic  (MY_UUID("0009"), BLERead | BLEWrite);
 
 
 //****************************** Screen Bitmaps *********************************
@@ -800,11 +800,12 @@ void bleUpdate(){
   double valFinal_2 = (((double)(capFinal_2))/8388608)*4096;
   double valFinal_3 = (((double)(capFinal_3))/8388608)*4096;
 
-  String strCapVal = String(capVal);
-  String strValInit = String(valInit);
-  String strValFinal_1 = String(valFinal_1);
-  String strValFinal_2 = String(valFinal_2);
-  String strValFinal_3 = String(valFinal_3);
+  
+  int intCapVal = capVal;
+  int intValInit = valInit;
+  int intValFinal_1 = valFinal_1;
+  int intValFinal_2 = valFinal_2;
+  int intValFinal_3 = valFinal_3;
 
   BLEDevice central = BLE.central();
 
@@ -816,11 +817,11 @@ void bleUpdate(){
     // while (central.connected()){
 
 
-      VirusSensorCharacteristic.writeValue(strCapVal);
-      VirusInitialCharacteristic.writeValue(strValInit);
-      VirusMeasurement1Characteristic.writeValue(strValFinal_1);
-      VirusMeasurement2Characteristic.writeValue(strValFinal_2);
-      VirusMeasurement3Characteristic.writeValue(strValFinal_3);
+      VirusSensorCharacteristic.writeValue(intCapVal);
+      VirusInitialCharacteristic.writeValue(intValInit);
+      VirusMeasurement1Characteristic.writeValue(intValFinal_1);
+      VirusMeasurement2Characteristic.writeValue(intValFinal_2);
+      VirusMeasurement3Characteristic.writeValue(intValFinal_3);
       
       delay(1000); 
     // }
