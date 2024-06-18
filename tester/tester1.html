@@ -27,7 +27,8 @@
     connectButton.addEventListener('click', async () => {
       try {
         device = await navigator.bluetooth.requestDevice({
-          filters: [{ name: 'SCRBLE_1' }]  // Connect to device by name
+          filters: [{ name: 'SCRBLE_1' }],  // Connect to device by name
+	  optionalServices: ['555a0002-0000-467a-9538-01f0652c74ef']
         });
         await device.gatt.connect();
         statusDiv.textContent = "Connected";
