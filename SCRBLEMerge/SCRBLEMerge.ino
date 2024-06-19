@@ -167,6 +167,16 @@ uint16_t voltage = 9999;
 
 uint8_t charge = 0;
 
+// I still hate this shit
+
+
+  double capVal;
+  double valInit;
+  double valFinal_1;
+  double valFinal_2;
+  double valFinal_3;
+
+
 //********************************* Initialization *******************************
 void setup() {
   Serial.begin(15200);
